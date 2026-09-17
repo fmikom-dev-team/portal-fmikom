@@ -90,7 +90,7 @@ class TemplateMutationService
             $jenisSuratName = $jenisSurat->nama;
         }
 
-        // FAST currently uses one active template per letter type.
+        // FASt currently uses one active template per letter type.
         // Keep template.name synchronized with jenis surat name for simpler admin UX
         // while preserving the existing database shape for compatibility.
         $templateName = $jenisSuratName;
@@ -206,7 +206,7 @@ class TemplateMutationService
 
         return to_route($this->templatesIndexRouteName(), [
             'jenis_surat_id' => $jenisSurat->id,
-        ])->with('success', 'Template surat berhasil disimpan.');
+        ])->with('fast_success', 'Template surat berhasil disimpan.');
     }
 
     public function duplicate(JenisSurat $jenisSurat): RedirectResponse
@@ -248,7 +248,7 @@ class TemplateMutationService
 
             return to_route($this->templatesIndexRouteName(), [
                 'jenis_surat_id' => $copy->id,
-            ])->with('success', 'Template surat berhasil diduplikasi.');
+            ])->with('fast_success', 'Template surat berhasil diduplikasi.');
         });
     }
 

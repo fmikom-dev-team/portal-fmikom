@@ -8,7 +8,10 @@ use App\Modules\Wims\Services\Shared\Attendance\AttendanceService;
 use App\Support\WimsStorage;
 use Carbon\CarbonInterface;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class AttendanceActionService
 {
@@ -33,6 +36,8 @@ class AttendanceActionService
 
         // Validasi lokasi dipusatkan di service agar mekanisme geofencing pada
         // web-based internship management and attendance system tetap seragam.
+        // Titik referensi dan radius selalu diambil dari perusahaan pada penempatan
+        // mahasiswa, sehingga frontend tidak menentukan lokasi target sendiri.
         return $this->attendanceService->validateLocation(
             $latitude,
             $longitude,
@@ -69,27 +74,49 @@ class AttendanceActionService
         ?CarbonInterface $checkedAt = null,
     ): AbsensiMagang {
         $checkedAt ??= now();
-        $photoPath = $this->storePhoto($photo, 'absensi/check-in');
+        $photoPath = null;
 
-        return AbsensiMagang::create([
-            'pendaftaran_id' => $pendaftaran->id,
-            'tanggal' => $checkedAt->toDateString(),
-            'waktu_masuk' => $checkedAt->format('H:i:s'),
-            'timestamp_masuk' => $checkedAt,
-            'latitude_masuk' => $latitude,
-            'longitude_masuk' => $longitude,
-            // Distance dan status valid merekam hasil validasi geofencing saat check-in.
-            'distance_masuk' => $locationResult['distance'],
-            'lokasi_valid' => $locationResult['is_valid'],
-            'foto_bukti_path' => $photoPath,
-            'ip_address' => $ipAddress,
-            'user_agent' => $userAgent,
-            'status' => $this->attendanceAvailabilityService->resolveStatus(
-                $checkedAt,
-                $pendaftaran->perusahaan?->jam_masuk,
-                $pendaftaran->perusahaan?->toleransi_terlambat_menit,
-            ),
-        ]);
+        try {
+            return DB::transaction(function () use ($pendaftaran, $checkedAt, $latitude, $longitude, $photo, $ipAddress, $userAgent, $locationResult, &$photoPath): AbsensiMagang {
+                $lockedRegistration = PendaftaranMagang::query()
+                    ->lockForUpdate()
+                    ->findOrFail($pendaftaran->id);
+
+                if (AbsensiMagang::query()
+                    ->where('pendaftaran_id', $lockedRegistration->id)
+                    ->whereDate('tanggal', $checkedAt->toDateString())
+                    ->exists()) {
+                    throw ValidationException::withMessages(['attendance' => 'Presensi hari ini sudah tercatat.']);
+                }
+
+                $photoPath = $this->storePhoto($photo, 'absensi/check-in');
+
+                return AbsensiMagang::create([
+                    'pendaftaran_id' => $lockedRegistration->id,
+                    'tanggal' => $checkedAt->toDateString(),
+                    'waktu_masuk' => $checkedAt->format('H:i:s'),
+                    'timestamp_masuk' => $checkedAt,
+                    'latitude_masuk' => $latitude,
+                    'longitude_masuk' => $longitude,
+                    'distance_masuk' => $locationResult['distance'],
+                    'lokasi_valid' => $locationResult['is_valid'],
+                    'foto_bukti_path' => $photoPath,
+                    'ip_address' => $ipAddress,
+                    'user_agent' => $userAgent,
+                    'status' => $this->attendanceAvailabilityService->resolveStatus(
+                        $checkedAt,
+                        $lockedRegistration->perusahaan?->jam_masuk,
+                        $lockedRegistration->perusahaan?->toleransi_terlambat_menit,
+                    ),
+                ]);
+            });
+        } catch (Throwable $exception) {
+            if ($photoPath) {
+                WimsStorage::delete($photoPath);
+            }
+
+            throw $exception;
+        }
     }
 
     public function completeCheckOut(
@@ -101,18 +128,34 @@ class AttendanceActionService
         ?CarbonInterface $checkedOutAt = null,
     ): void {
         $checkedOutAt ??= now();
-        $photoPath = $this->storePhoto($photo, 'absensi/check-out');
+        $photoPath = null;
 
-        $attendance->update([
-            'timestamp_keluar' => $checkedOutAt,
-            'waktu_keluar' => $checkedOutAt->format('H:i:s'),
-            'latitude_keluar' => $latitude,
-            'longitude_keluar' => $longitude,
-            // Check-out menyimpan ulang hasil validasi lokasi agar bukti kehadiran
-            // saat masuk dan keluar dapat dianalisis terpisah.
-            'distance_keluar' => $locationResult['distance'],
-            'foto_bukti_checkout_path' => $photoPath,
-        ]);
+        try {
+            DB::transaction(function () use ($attendance, $checkedOutAt, $latitude, $longitude, $photo, $locationResult, &$photoPath): void {
+                $lockedAttendance = AbsensiMagang::query()->lockForUpdate()->findOrFail($attendance->id);
+
+                if ($lockedAttendance->timestamp_keluar || $lockedAttendance->waktu_keluar) {
+                    throw ValidationException::withMessages(['attendance' => 'Presensi sudah di-check-out sebelumnya.']);
+                }
+
+                $photoPath = $this->storePhoto($photo, 'absensi/check-out');
+
+                $lockedAttendance->update([
+                    'timestamp_keluar' => $checkedOutAt,
+                    'waktu_keluar' => $checkedOutAt->format('H:i:s'),
+                    'latitude_keluar' => $latitude,
+                    'longitude_keluar' => $longitude,
+                    'distance_keluar' => $locationResult['distance'],
+                    'foto_bukti_checkout_path' => $photoPath,
+                ]);
+            });
+        } catch (Throwable $exception) {
+            if ($photoPath) {
+                WimsStorage::delete($photoPath);
+            }
+
+            throw $exception;
+        }
     }
 
     private function storePhoto(?UploadedFile $photo, string $directory): ?string
@@ -124,6 +167,8 @@ class AttendanceActionService
         $extension = strtolower($photo->getClientOriginalExtension() ?: $photo->extension() ?: 'bin');
         $path = $directory.'/'.Str::uuid().'.'.$extension;
 
+        // File foto disimpan melalui helper storage WIMS agar lokasi penyimpanan
+        // backend tetap seragam dan tidak terekspos langsung dari frontend.
         WimsStorage::storeUploadedFileAs($photo, $directory, basename($path));
 
         return $path;

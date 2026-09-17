@@ -528,6 +528,7 @@ class Surat extends Model
     {
         $this->loadMissing('qrCode');
 
+        // Dokumen final hanya bisa dibuka kalau surat sudah selesai, ada approval akhir, dan QR aktif.
         if ($this->status !== self::STATUS_FINISHED) {
             return false;
         }

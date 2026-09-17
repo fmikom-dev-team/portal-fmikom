@@ -8,7 +8,7 @@ class HistoryController extends BaseHistoryController
 {
     protected function pageName(): string
     {
-        return 'dosen/History';
+        return 'Modules/Fast/Dosen/History';
     }
 
     protected function basePath(): string

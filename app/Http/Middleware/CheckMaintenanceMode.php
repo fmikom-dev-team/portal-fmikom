@@ -56,14 +56,22 @@ class CheckMaintenanceMode
 
             // Render modern public maintenance page
             $message = $settings['maintenance_message'] ?? 'Sistem sedang dalam pemeliharaan. Silakan kembali beberapa saat lagi.';
+            $maintenanceProps = [
+                'message' => $message,
+                'maintenance' => [
+                    'message' => $message,
+                    'contact_email' => ! empty($settings['maintenance_contact_email']) ? (string) $settings['maintenance_contact_email'] : null,
+                    'contact_wa' => ! empty($settings['maintenance_contact_wa']) ? (string) $settings['maintenance_contact_wa'] : (! empty($settings['helpdesk_wa_number']) ? (string) $settings['helpdesk_wa_number'] : null),
+                    'website_url' => ! empty($settings['maintenance_website_url']) ? (string) $settings['maintenance_website_url'] : null,
+                    'estimated_end' => ! empty($settings['maintenance_estimated_end']) ? (string) $settings['maintenance_estimated_end'] : null,
+                ],
+            ];
 
             if ($request->header('X-Inertia')) {
-                return Inertia::render('Public/Maintenance', [
-                    'message' => $message,
-                ]);
+                return Inertia::render('Public/Maintenance', $maintenanceProps);
             }
 
-            $response = Inertia::render('Public/Maintenance', ['message' => $message])->toResponse($request);
+            $response = Inertia::render('Public/Maintenance', $maintenanceProps)->toResponse($request);
             $response->setStatusCode(503);
 
             return $response;

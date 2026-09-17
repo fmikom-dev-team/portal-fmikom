@@ -79,6 +79,6 @@ class GlobalSettingsController extends Controller
         // Clear semua cache setelah simpan
         TemplateGlobalSetting::clearCache();
 
-        return back()->with('success', 'Pengaturan berhasil disimpan.');
+        return back()->with('fast_success', 'Pengaturan berhasil disimpan.');
     }
 }

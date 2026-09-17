@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -432,8 +433,12 @@ class PortalPostController extends Controller
      */
     public function uploadFile(Request $request)
     {
+        @set_time_limit(300);
+        @ini_set('max_execution_time', '300');
+        @ini_set('memory_limit', '512M');
+
         $request->validate([
-            'file' => 'required|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,txt,csv|max:51200', // 50MB
+            'file' => 'required|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,rar,txt,csv|max:102400', // Max 100MB
         ]);
 
         if ($request->hasFile('file')) {
@@ -452,7 +457,7 @@ class PortalPostController extends Controller
             $filename = Str::random(30).'.'.$extension;
             $path = 'portal/posts/files/'.$filename;
 
-            Storage::disk('public')->put($path, file_get_contents($file->getRealPath()));
+            Storage::disk('public')->putFileAs('portal/posts/files', $file, $filename);
 
             return response()->json([
                 'success' => 1,
@@ -460,12 +465,128 @@ class PortalPostController extends Controller
                     'url' => '/storage/'.$path,
                     'name' => $file->getClientOriginalName(),
                     'size' => $file->getSize(),
-                    'extension' => $file->getClientOriginalExtension(),
+                    'extension' => $file->getClientOriginalExtension() ?: $extension,
                 ],
             ]);
         }
 
         return response()->json(['success' => 0, 'message' => 'Upload failed'], 400);
+    }
+
+    /**
+     * Chunked file upload for Editor.js attaches and large files.
+     * Slices large files (up to 100MB) into 1MB chunks to bypass proxy/Nginx upload buffer limitations.
+     */
+    public function uploadChunk(Request $request)
+    {
+        @set_time_limit(300);
+        @ini_set('max_execution_time', '300');
+        @ini_set('memory_limit', '512M');
+
+        $request->validate([
+            'chunk' => 'required|file|max:10240', // max 10MB per chunk, typically 1MB
+            'file_id' => 'required|string|regex:/^[a-zA-Z0-9_\-]+$/|max:64',
+            'chunk_index' => 'required|integer|min:0',
+            'total_chunks' => 'required|integer|min:1|max:500',
+            'original_name' => 'required|string|max:255',
+            'total_size' => 'required|integer|max:104857600', // 100MB
+        ]);
+
+        $fileId = $request->input('file_id');
+        $chunkIndex = (int) $request->input('chunk_index');
+        $totalChunks = (int) $request->input('total_chunks');
+        $originalName = $request->input('original_name');
+        $totalSize = (int) $request->input('total_size');
+
+        // Verify allowed extension
+        $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION) ?: 'bin');
+        $allowedExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'zip', 'rar', 'txt', 'csv'];
+        if (! in_array($extension, $allowedExtensions, true)) {
+            return response()->json([
+                'success' => 0,
+                'message' => "Format berkas .{$extension} tidak diizinkan. Hanya mendukung: ".implode(', ', $allowedExtensions),
+            ], 422);
+        }
+
+        $tempDir = storage_path('app/temp_chunks/'.$fileId);
+        if (! File::isDirectory($tempDir)) {
+            File::makeDirectory($tempDir, 0755, true);
+        }
+
+        $chunkFile = $request->file('chunk');
+        $chunkFile->move($tempDir, 'chunk_'.$chunkIndex);
+
+        // Check if all chunks have been received
+        $existingChunks = glob($tempDir.'/chunk_*');
+        if (count($existingChunks) < $totalChunks) {
+            return response()->json([
+                'success' => 1,
+                'status' => 'in_progress',
+                'chunk_index' => $chunkIndex,
+                'total_chunks' => $totalChunks,
+                'received_chunks' => count($existingChunks),
+            ]);
+        }
+
+        // All chunks arrived -> merge sequentially
+        $mergedPath = $tempDir.'/merged_'.$fileId.'.'.$extension;
+        $outHandle = fopen($mergedPath, 'wb');
+        if (! $outHandle) {
+            File::deleteDirectory($tempDir);
+
+            return response()->json(['success' => 0, 'message' => 'Gagal membuka berkas penggabungan di server.'], 500);
+        }
+
+        for ($i = 0; $i < $totalChunks; $i++) {
+            $chunkPath = $tempDir.'/chunk_'.$i;
+            if (! file_exists($chunkPath)) {
+                fclose($outHandle);
+
+                return response()->json(['success' => 0, 'message' => "Potongan file ke-{$i} tidak ditemukan. Silakan coba lagi."], 422);
+            }
+            $inHandle = fopen($chunkPath, 'rb');
+            stream_copy_to_stream($inHandle, $outHandle);
+            fclose($inHandle);
+        }
+        fclose($outHandle);
+
+        // Scan merged file for viruses if scanner is enabled
+        $uploadedFileObj = new UploadedFile($mergedPath, $originalName, null, null, true);
+        $scanner = app(VirusScannerService::class);
+        $scanResult = $scanner->scan($uploadedFileObj);
+        if (! $scanResult['safe']) {
+            File::deleteDirectory($tempDir);
+
+            return response()->json([
+                'success' => 0,
+                'message' => $scanResult['reason'],
+            ], 422);
+        }
+
+        $filename = Str::random(30).'.'.$extension;
+        $finalStoragePath = 'portal/posts/files/'.$filename;
+
+        // Stream merged file to public disk
+        $stream = fopen($mergedPath, 'rb');
+        Storage::disk('public')->put($finalStoragePath, $stream);
+        if (is_resource($stream)) {
+            fclose($stream);
+        }
+
+        // Clean up temporary chunks folder
+        File::deleteDirectory($tempDir);
+
+        $finalSize = Storage::disk('public')->size($finalStoragePath);
+
+        return response()->json([
+            'success' => 1,
+            'file' => [
+                'url' => '/storage/'.$finalStoragePath,
+                'name' => $originalName,
+                'size' => $finalSize ?: $totalSize,
+                'extension' => $extension,
+            ],
+        ]);
     }
 
     /**

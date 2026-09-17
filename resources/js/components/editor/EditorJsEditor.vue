@@ -15,6 +15,7 @@ const props = defineProps({
 	placeholder: { type: String, default: "Mulai menulis artikel…" },
 	uploadUrl: { type: String, default: "/portal-admin/posts/upload-image" },
 	uploadFileUrl: { type: String, default: "/portal-admin/posts/upload-file" },
+	uploadChunkUrl: { type: String, default: "/portal-admin/posts/upload-chunk" },
 	readOnly: { type: Boolean, default: false },
 	minHeight: { type: Number, default: 400 },
 	mode: { type: String, default: 'full' }, // 'full' | 'simple'
@@ -63,6 +64,7 @@ onMounted(async () => {
 	const { uploadByFile, uploadByUrl, uploadFile } = createUploadService(
 		props.uploadUrl,
 		props.uploadFileUrl,
+		props.uploadChunkUrl,
 	);
 
 	const [

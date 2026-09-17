@@ -21,6 +21,11 @@ class AdminAssessmentRecapPageService
     {
         $search = trim((string) $request->string('search', ''));
         $filter = (string) $request->string('filter', 'all');
+        $allowedFilters = ['all', 'incomplete', 'missing_dosen_score', 'missing_mitra_score', 'complete'];
+
+        if (! in_array($filter, $allowedFilters, true)) {
+            $filter = 'all';
+        }
         $today = now()->startOfDay();
 
         $baseQuery = PendaftaranMagang::query()

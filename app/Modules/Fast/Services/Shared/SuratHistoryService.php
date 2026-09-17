@@ -72,7 +72,7 @@ class SuratHistoryService
         return static::record(
             $suratId,
             SuratHistory::ACTION_REVISED,
-            "Dikembalikan {$roleNama} untuk revisi",
+            'Surat sedang ditinjau dan direvisi',
             [
                 'keterangan' => $catatan,
                 'meta' => [

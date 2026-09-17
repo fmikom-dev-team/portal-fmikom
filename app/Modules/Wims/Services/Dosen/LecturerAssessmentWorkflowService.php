@@ -20,6 +20,8 @@ class LecturerAssessmentWorkflowService
 
     public function isAuthorized(User $user, PendaftaranMagang $pendaftaran): bool
     {
+        // Akses dosen ditentukan dari assignment role WIMS aktif dan relasi
+        // dosen_pembimbing pada pendaftaran, bukan hanya dari URL halaman.
         return $this->wimsModuleRoleService->hasActiveRole($user->id, 'dosen')
             && (int) $pendaftaran->dosen_pembimbing_id === (int) $user->id;
     }

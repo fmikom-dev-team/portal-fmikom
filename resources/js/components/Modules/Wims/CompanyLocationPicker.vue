@@ -1,6 +1,7 @@
 ﻿<script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { LoaderCircle, MapPinned, Search } from 'lucide-vue-next';
+import axios from 'axios';
+import { Crosshair, Link2, LoaderCircle, MapPinned, Search } from 'lucide-vue-next';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,8 @@ const props = defineProps<{
     latitude?: number | null;
     longitude?: number | null;
     address?: string | null;
+    companyName?: string | null;
+    city?: string | null;
 }>();
 
 const emit = defineEmits<{
@@ -28,8 +31,13 @@ const emit = defineEmits<{
 
 const mapElement = ref<HTMLElement | null>(null);
 const search = ref(props.address ?? '');
+const googleMapsLink = ref('');
+const manualLatitude = ref(props.latitude?.toString() ?? '');
+const manualLongitude = ref(props.longitude?.toString() ?? '');
 const results = ref<SearchResult[]>([]);
 const isSearching = ref(false);
+const isLocating = ref(false);
+const isResolvingLink = ref(false);
 const error = ref('');
 const DEFAULT_CENTER: [number, number] = [-7.6998, 109.0187];
 const DEFAULT_ZOOM = 6;
@@ -189,7 +197,9 @@ const syncMapSize = () => {
 };
 
 const searchLocation = async () => {
-    const query = search.value.trim();
+    const query = [search.value.trim() || props.companyName?.trim(), props.city?.trim()]
+        .filter(Boolean)
+        .join(', ');
 
     if (!query) {
         results.value = [];
@@ -232,6 +242,79 @@ const searchLocation = async () => {
     } finally {
         isSearching.value = false;
         searchController = null;
+    }
+};
+
+const setCoordinates = (latitude: number, longitude: number, shouldReverseGeocode = true) => {
+    const normalizedLatitude = Number(latitude.toFixed(8));
+    const normalizedLongitude = Number(longitude.toFixed(8));
+
+    manualLatitude.value = String(normalizedLatitude);
+    manualLongitude.value = String(normalizedLongitude);
+    emit('update:latitude', normalizedLatitude);
+    emit('update:longitude', normalizedLongitude);
+    setMarker(normalizedLatitude, normalizedLongitude);
+
+    if (shouldReverseGeocode) {
+        reverseGeocode(normalizedLatitude, normalizedLongitude);
+    }
+};
+
+const useCurrentLocation = () => {
+    if (! navigator.geolocation) {
+        error.value = 'Browser ini tidak mendukung pengambilan lokasi perangkat.';
+        return;
+    }
+
+    isLocating.value = true;
+    error.value = '';
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            setCoordinates(position.coords.latitude, position.coords.longitude);
+            isLocating.value = false;
+        },
+        () => {
+            error.value = 'Lokasi perangkat tidak dapat diakses. Izinkan akses lokasi atau pilih titik di peta.';
+            isLocating.value = false;
+        },
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 },
+    );
+};
+
+const applyManualCoordinates = () => {
+    const latitude = Number(manualLatitude.value);
+    const longitude = Number(manualLongitude.value);
+
+    if (! Number.isFinite(latitude) || latitude < -90 || latitude > 90
+        || ! Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+        error.value = 'Latitude atau longitude tidak valid.';
+        return;
+    }
+
+    error.value = '';
+    setCoordinates(latitude, longitude);
+};
+
+const resolveGoogleMapsLink = async () => {
+    if (! googleMapsLink.value.trim()) {
+        return;
+    }
+
+    isResolvingLink.value = true;
+    error.value = '';
+
+    try {
+        const response = await axios.post('/wims/admin/perusahaan/resolve-map-link', {
+            url: googleMapsLink.value.trim(),
+        });
+
+        setCoordinates(Number(response.data.latitude), Number(response.data.longitude));
+        googleMapsLink.value = '';
+    } catch (requestError: any) {
+        error.value = requestError?.response?.data?.errors?.url?.[0]
+            ?? 'Link Google Maps tidak dapat diproses. Coba gunakan URL lengkap atau pilih titik di peta.';
+    } finally {
+        isResolvingLink.value = false;
     }
 };
 
@@ -287,8 +370,7 @@ onMounted(async () => {
         emit('update:latitude', latitude);
         emit('update:longitude', longitude);
         results.value = [];
-        setMarker(latitude, longitude);
-        reverseGeocode(latitude, longitude);
+        setCoordinates(latitude, longitude);
     });
 
     if (props.latitude !== null && props.latitude !== undefined && props.longitude !== null && props.longitude !== undefined) {
@@ -322,6 +404,9 @@ onBeforeUnmount(() => {
 watch(
     () => [props.latitude, props.longitude] as const,
     ([latitude, longitude]) => {
+        manualLatitude.value = latitude === null || latitude === undefined ? '' : String(latitude);
+        manualLongitude.value = longitude === null || longitude === undefined ? '' : String(longitude);
+
         if (latitude === null || latitude === undefined || longitude === null || longitude === undefined) {
             clearMarker();
             map?.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
@@ -370,6 +455,47 @@ watch(
             </Button>
         </div>
 
+        <div class="grid gap-3 sm:grid-cols-[1fr_auto]">
+            <div class="relative">
+                <Link2 class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                <Input
+                    v-model="googleMapsLink"
+                    type="url"
+                    placeholder="Tempel link Google Maps (opsional)"
+                    class="h-11 rounded-2xl border-slate-200 bg-white pl-10"
+                    @keydown.enter.prevent="resolveGoogleMapsLink"
+                />
+            </div>
+            <Button
+                type="button"
+                variant="outline"
+                class="h-11 rounded-2xl border-blue-200 bg-white px-5 text-blue-700 hover:bg-blue-50"
+                :disabled="isResolvingLink"
+                @click="resolveGoogleMapsLink"
+            >
+                <LoaderCircle v-if="isResolvingLink" class="size-4 animate-spin" />
+                <Link2 v-else class="size-4" />
+                Ambil dari Link
+            </Button>
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+            <Button
+                type="button"
+                variant="outline"
+                class="h-10 rounded-xl border-emerald-200 bg-white px-4 text-emerald-700 hover:bg-emerald-50"
+                :disabled="isLocating"
+                @click="useCurrentLocation"
+            >
+                <LoaderCircle v-if="isLocating" class="size-4 animate-spin" />
+                <Crosshair v-else class="size-4" />
+                Gunakan Lokasi Saya
+            </Button>
+            <p class="self-center text-xs text-slate-500">
+                Pilih hasil pencarian, gunakan lokasi perangkat, atau klik peta sebagai alternatif.
+            </p>
+        </div>
+
         <Alert v-if="error" variant="destructive" class="border-rose-200 bg-rose-50 text-rose-700">
             <AlertTitle>Pencarian lokasi gagal</AlertTitle>
             <AlertDescription>{{ error }}</AlertDescription>
@@ -404,6 +530,14 @@ watch(
                 <p class="text-xs font-medium text-slate-500">Longitude</p>
                 <p class="mt-2 text-sm font-medium text-slate-900">{{ longitude ?? '-' }}</p>
             </div>
+        </div>
+
+        <div class="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
+            <Input v-model="manualLatitude" type="number" step="any" placeholder="Latitude" class="h-10 rounded-xl border-slate-200 bg-white" />
+            <Input v-model="manualLongitude" type="number" step="any" placeholder="Longitude" class="h-10 rounded-xl border-slate-200 bg-white" />
+            <Button type="button" variant="outline" class="h-10 rounded-xl border-slate-200 bg-white" @click="applyManualCoordinates">
+                Terapkan Koordinat
+            </Button>
         </div>
     </div>
 </template>

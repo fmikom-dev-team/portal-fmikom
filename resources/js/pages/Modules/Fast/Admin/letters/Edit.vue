@@ -5,6 +5,7 @@ import { useFastPermissions } from '@/composables/modules/fast/useFastPermission
 import { Head, useForm } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import RecipientSelector from '@/components/Modules/Fast/Admin/RecipientSelector.vue';
+import type { FastLetterFormState } from './types';
 import { ChevronLeft, Save, Search, Plus, X, FileEdit } from 'lucide-vue-next';
 type AttachmentColumn = { key: string; label: string; align: 'left' | 'center' | 'right'; bold: boolean };
 type AttachmentRow = Record<string, string>;
@@ -83,7 +84,7 @@ const props = defineProps<{
 }>();
 const consumedFormKeys = ['kepada_yth', 'lampiran_keterangan', 'lampiran_judul', 'lampiran_orientation', 'lampiran_judul_align', 'lampiran_judul_bold', 'lampiran_label_no', 'lampiran_label_nama', 'lampiran_label_nim', 'lampiran_label_prodi', 'lampiran_mode', 'lampiran_mahasiswa', 'lampiran_columns', 'lampiran_rows', 'perihal'] as const;
 // Form
-const form = useForm({
+const form = useForm<FastLetterFormState>({
     jenis_surat_id: props.formData.jenis_surat_id,
     subject_name: props.formData.subject_name ?? '',
     keperluan: props.formData.keperluan ?? '',
@@ -278,7 +279,7 @@ const showSubjectSection = computed(() => !isRequesterSubmission.value);
 const isPendingEdit = computed(() => props.surat.status === 'pending');
 const alertTitle = computed(() =>
     isPendingEdit.value
-        ? 'Surat admin siap dilengkapi'
+        ? 'Surat siap dilengkapi'
         : 'Surat perlu diperbarui',
 );
 const alertDescription = computed(() =>

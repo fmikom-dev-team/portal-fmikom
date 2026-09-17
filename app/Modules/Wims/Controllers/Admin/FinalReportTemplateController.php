@@ -35,7 +35,9 @@ class FinalReportTemplateController extends Controller
         );
 
         return redirect()
-            ->route('wims.admin.final-report-templates.index', ['template' => $template->id])
+            ->route('wims.admin.final-report-templates.index', [
+                $template->template_type === 'proposal' ? 'proposal_template' : 'final_report_template' => $template->id,
+            ])
             ->with('success', 'Template laporan akhir berhasil ditambahkan.');
     }
 
@@ -48,7 +50,9 @@ class FinalReportTemplateController extends Controller
         );
 
         return redirect()
-            ->route('wims.admin.final-report-templates.index', ['template' => $template->id])
+            ->route('wims.admin.final-report-templates.index', [
+                $template->template_type === 'proposal' ? 'proposal_template' : 'final_report_template' => $template->id,
+            ])
             ->with('success', 'Template laporan akhir berhasil diperbarui.');
     }
 

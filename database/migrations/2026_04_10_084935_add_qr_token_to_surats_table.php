@@ -12,6 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('surats', function (Blueprint $table) {
+            // Token publik dibuat unique agar satu QR hanya merujuk ke satu surat.
             $table->string('qr_token')->unique()->nullable();
         });
     }

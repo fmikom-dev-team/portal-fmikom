@@ -5,6 +5,7 @@ import { Head, useForm } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import LetterStepIndicator from '@/components/Modules/Fast/Admin/LetterStepIndicator.vue';
 import RecipientSelector from '@/components/Modules/Fast/Admin/RecipientSelector.vue';
+import type { FastLetterFormState } from './types';
 import { ChevronRight, ChevronLeft, Plus, X } from 'lucide-vue-next';
 type AttachmentColumn = { key: string; label: string; align: 'left' | 'center' | 'right'; bold: boolean };
 type AttachmentRow = Record<string, string>;
@@ -68,7 +69,7 @@ const props = defineProps<{
     jenisSurat: JenisSurat;
     formData: FormData;
 }>();
-const form = useForm({
+const form = useForm<FastLetterFormState>({
     jenis_surat_id: props.formData.jenis_surat_id,
     subject_name: props.formData.subject_name ?? '',
     keperluan: props.formData.keperluan ?? '',

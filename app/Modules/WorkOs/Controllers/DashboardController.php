@@ -126,6 +126,10 @@ class DashboardController extends Controller // NOSONAR
         $request->validate([
             'maintenance_mode' => ['nullable', 'in:0,1'],
             'maintenance_message' => ['nullable', 'string', 'max:500'],
+            'maintenance_contact_email' => ['nullable', 'email', 'max:255'],
+            'maintenance_contact_wa' => ['nullable', 'string', 'max:30'],
+            'maintenance_website_url' => ['nullable', 'string', 'max:255'],
+            'maintenance_estimated_end' => ['nullable', 'string', 'max:100'],
             'brand_name' => ['nullable', 'string', 'max:100'],
             'brand_subtitle' => ['nullable', 'string', 'max:150'],
             'brand_description' => ['nullable', 'string', 'max:500'],
@@ -141,9 +145,11 @@ class DashboardController extends Controller // NOSONAR
         ]);
 
         $allowed = [
-            'maintenance_mode', 'maintenance_message', 'brand_name', 'brand_subtitle',
-            'brand_description', 'primary_color', 'public_registration', 'helpdesk_wa_number',
-            'helpdesk_wa_template', 'seo_meta_title', 'seo_meta_description',
+            'maintenance_mode', 'maintenance_message', 'maintenance_contact_email',
+            'maintenance_contact_wa', 'maintenance_website_url', 'maintenance_estimated_end',
+            'brand_name', 'brand_subtitle', 'brand_description', 'primary_color',
+            'public_registration', 'helpdesk_wa_number', 'helpdesk_wa_template',
+            'seo_meta_title', 'seo_meta_description',
         ];
 
         foreach ($allowed as $key) {
@@ -1623,6 +1629,10 @@ class DashboardController extends Controller // NOSONAR
             'primary_color' => $settings['primary_color'] ?? '#2563eb',
             'maintenance_mode' => $settings['maintenance_mode'] ?? '0',
             'maintenance_message' => $settings['maintenance_message'] ?? 'Sistem sedang dalam pemeliharaan. Silakan kembali beberapa saat lagi.',
+            'maintenance_contact_email' => $settings['maintenance_contact_email'] ?? 'admin@fmikom.ac.id',
+            'maintenance_contact_wa' => $settings['maintenance_contact_wa'] ?? ($settings['helpdesk_wa_number'] ?? '628123456789'),
+            'maintenance_website_url' => $settings['maintenance_website_url'] ?? '',
+            'maintenance_estimated_end' => $settings['maintenance_estimated_end'] ?? '',
             'public_registration' => $settings['public_registration'] ?? '1',
             'helpdesk_wa_number' => $settings['helpdesk_wa_number'] ?? config('services.helpdesk.wa_number', '628123456789'),
             'helpdesk_wa_template' => $settings['helpdesk_wa_template'] ?? "Halo Admin FMIKOM, saya bermaksud mengajukan pembaruan email aktivasi akun:\n\n• Nama Mahasiswa : {nama}\n• NIM            : {nim}\n• Email Lama     : {email_lama}\n• Email Baru     : {email_baru}\n\nSaya siap melampirkan foto KTM/KTP sebagai verifikasi fisik. Mohon bantuannya.",

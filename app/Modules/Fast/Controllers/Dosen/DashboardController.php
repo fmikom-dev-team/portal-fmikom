@@ -8,7 +8,7 @@ class DashboardController extends BaseDashboardController
 {
     protected function pageName(): string
     {
-        return 'dosen/Dashboard';
+        return 'Modules/Fast/Dosen/Dashboard';
     }
 
     protected function submissionRouteName(): string

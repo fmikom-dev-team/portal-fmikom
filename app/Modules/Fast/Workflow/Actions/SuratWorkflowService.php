@@ -44,6 +44,7 @@ class SuratWorkflowService
             'Role pengguna tidak diizinkan untuk jenis surat ini.',
         );
 
+        // Field dinamis diverifikasi dari konfigurasi jenis surat agar payload liar dari client ditolak.
         $dynamicData = $this->validateDynamicData($jenisSurat, Arr::wrap($payload['data'] ?? []));
         $storedPaths = [];
 
@@ -73,6 +74,7 @@ class SuratWorkflowService
                 return $this->freshSubmittedSurat($surat);
             });
         } catch (\Throwable $throwable) {
+            // Jika transaksi gagal, lampiran yang sudah terlanjur tersimpan ikut dibersihkan.
             FastStorage::delete($storedPaths);
 
             throw $throwable;
@@ -104,6 +106,7 @@ class SuratWorkflowService
 
         abort_if($requiresSubjectUser && $subjectName === '', 422, 'Atas nama wajib diisi.');
 
+        // Admin juga melewati validasi field dinamis yang sama sebelum surat keluar dibuat.
         $dynamicData = $this->validateDynamicData($jenisSurat, Arr::wrap($payload['data'] ?? []));
 
         $surat = DB::transaction(function () use ($admin, $payload, $jenisSurat, $dynamicData): Surat {
@@ -404,6 +407,7 @@ class SuratWorkflowService
      */
     public function validateDynamicData(JenisSurat $jenisSurat, array $payload): array
     {
+        // Validasi ini menjaga agar field yang dikirim client tetap mengikuti konfigurasi jenis surat.
         $rules = [];
         $messages = [];
 
@@ -475,6 +479,7 @@ class SuratWorkflowService
      */
     protected function storeLampirans(Surat $surat, array $lampirans, array &$storedPaths): void
     {
+        // Lampiran disimpan ke disk lokal lalu direkam ke tabel surat_lampirans.
         FastStorage::makeDirectory('surat-lampirans', 'local');
 
         foreach ($lampirans as $lampiran) {

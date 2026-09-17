@@ -4,8 +4,13 @@ import axios from "axios";
 import {
 	AlertCircle,
 	Building2,
+	Calendar,
 	Camera,
+	Check,
 	CheckCircle,
+	ChevronLeft,
+	ChevronRight,
+	Clock,
 	Cpu,
 	Edit3,
 	ExternalLink,
@@ -16,6 +21,8 @@ import {
 	Link as LinkIcon,
 	Loader2,
 	Lock,
+	Mail,
+	MessageSquare,
 	Plus,
 	RefreshCw,
 	Save,
@@ -49,11 +56,167 @@ const form = reactive({
 	primary_color: props.settings.primary_color || "#2563eb",
 	maintenance_mode: props.settings.maintenance_mode === "1" ? "1" : "0",
 	maintenance_message: props.settings.maintenance_message || "Sistem sedang dalam pemeliharaan. Silakan kembali beberapa saat lagi.",
+	maintenance_contact_email: props.settings.maintenance_contact_email || "admin@fmikom.ac.id",
+	maintenance_contact_wa: props.settings.maintenance_contact_wa || props.settings.helpdesk_wa_number || "628123456789",
+	maintenance_website_url: props.settings.maintenance_website_url || "",
+	maintenance_estimated_end: props.settings.maintenance_estimated_end || "",
 	public_registration: props.settings.public_registration !== "0" ? "1" : "0",
 	helpdesk_wa_number: props.settings.helpdesk_wa_number || "628123456789",
 	seo_meta_title: props.settings.seo_meta_title || "Portal FMIKOM - Fakultas Matematika dan Ilmu Komputer UNUGHA",
 	seo_meta_description: props.settings.seo_meta_description || "Sistem informasi terpadu, direktori alumni, jaringan mitra industri, dan layanan akademik FMIKOM UNUGHA.",
 });
+
+// Maintenance DateTime Picker Modal State
+const isDatePickerOpen = ref(false);
+const pickerDate = ref(new Date());
+const pickerHour = ref(18);
+const pickerMinute = ref(0);
+
+const monthNamesId = [
+	"Januari",
+	"Februari",
+	"Maret",
+	"April",
+	"Mei",
+	"Juni",
+	"Juli",
+	"Agustus",
+	"September",
+	"Oktober",
+	"November",
+	"Desember",
+];
+
+const dayNamesId = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+
+const currentPickerYear = computed(() => pickerDate.value.getFullYear());
+const currentPickerMonth = computed(() => pickerDate.value.getMonth());
+
+const pickerDaysInMonth = computed(() => {
+	const year = pickerDate.value.getFullYear();
+	const month = pickerDate.value.getMonth();
+	const firstDayIndex = new Date(year, month, 1).getDay();
+	const totalDays = new Date(year, month + 1, 0).getDate();
+
+	const days: {
+		day: number;
+		isCurrentMonth: boolean;
+		isSelected: boolean;
+		isToday: boolean;
+		isPast: boolean;
+	}[] = [];
+
+	// Previous month buffer days
+	const prevMonthTotalDays = new Date(year, month, 0).getDate();
+	for (let i = firstDayIndex - 1; i >= 0; i--) {
+		days.push({
+			day: prevMonthTotalDays - i,
+			isCurrentMonth: false,
+			isSelected: false,
+			isToday: false,
+			isPast: true,
+		});
+	}
+
+	// Current month days
+	const today = new Date();
+	const todayClean = new Date(
+		today.getFullYear(),
+		today.getMonth(),
+		today.getDate(),
+	);
+	for (let i = 1; i <= totalDays; i++) {
+		const thisDate = new Date(year, month, i);
+		const isToday = thisDate.toDateString() === today.toDateString();
+		const isSelected =
+			thisDate.toDateString() === pickerDate.value.toDateString();
+		const isPast = thisDate < todayClean;
+
+		days.push({
+			day: i,
+			isCurrentMonth: true,
+			isSelected,
+			isToday,
+			isPast,
+		});
+	}
+
+	return days;
+});
+
+const prevPickerMonth = () => {
+	pickerDate.value = new Date(
+		pickerDate.value.getFullYear(),
+		pickerDate.value.getMonth() - 1,
+		1,
+	);
+};
+
+const nextPickerMonth = () => {
+	pickerDate.value = new Date(
+		pickerDate.value.getFullYear(),
+		pickerDate.value.getMonth() + 1,
+		1,
+	);
+};
+
+const selectPickerDay = (day: number) => {
+	pickerDate.value = new Date(
+		pickerDate.value.getFullYear(),
+		pickerDate.value.getMonth(),
+		day,
+	);
+};
+
+const openDatePickerModal = () => {
+	isDatePickerOpen.value = true;
+};
+
+const closeDatePickerModal = () => {
+	isDatePickerOpen.value = false;
+};
+
+const applyQuickPreset = (minutesToAdd: number) => {
+	const target = new Date(Date.now() + minutesToAdd * 60 * 1000);
+	pickerDate.value = target;
+	pickerHour.value = target.getHours();
+	pickerMinute.value = target.getMinutes();
+};
+
+const applyPresetTomorrowMorning = () => {
+	const target = new Date();
+	target.setDate(target.getDate() + 1);
+	pickerDate.value = target;
+	pickerHour.value = 8;
+	pickerMinute.value = 0;
+};
+
+const applyPresetTonight = () => {
+	const target = new Date();
+	pickerDate.value = target;
+	pickerHour.value = 23;
+	pickerMinute.value = 59;
+};
+
+const formatSelectedDateString = computed(() => {
+	const d = pickerDate.value;
+	const day = d.getDate();
+	const month = monthNamesId[d.getMonth()];
+	const year = d.getFullYear();
+	const h = String(pickerHour.value).padStart(2, "0");
+	const m = String(pickerMinute.value).padStart(2, "0");
+	return `${day} ${month} ${year}, ${h}:${m} WIB`;
+});
+
+const applyPickerSelection = () => {
+	form.maintenance_estimated_end = formatSelectedDateString.value;
+	isDatePickerOpen.value = false;
+};
+
+const clearPickerSelection = () => {
+	form.maintenance_estimated_end = "";
+	isDatePickerOpen.value = false;
+};
 
 // Sitelinks CRUD State
 interface Sitelink {
@@ -629,9 +792,17 @@ const flushCache = async () => {
 
 					<!-- TAB 2: SYSTEM & MAINTENANCE -->
 					<div v-show="activeTab === 'system'" class="space-y-6">
-						<h3 class="text-[14.5px] font-bold text-gray-900 dark:text-zinc-100 flex items-center gap-2">
-							<ShieldAlert class="w-4 h-4 text-red-500" /> Mode Pemeliharaan (Maintenance)
-						</h3>
+						<div class="flex items-center justify-between">
+							<h3 class="text-[14.5px] font-bold text-gray-900 dark:text-zinc-100 flex items-center gap-2">
+								<ShieldAlert class="w-4 h-4 text-red-500" /> Mode Pemeliharaan (Maintenance)
+							</h3>
+							<span v-if="form.maintenance_mode === '1'" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 animate-pulse">
+								<span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Maintenance Aktif
+							</span>
+							<span v-else class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+								<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Sistem Online
+							</span>
+						</div>
 
 						<!-- Maintenance Toggle Switch -->
 						<div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200 dark:border-zinc-800 rounded-xl">
@@ -651,16 +822,115 @@ const flushCache = async () => {
 							</button>
 						</div>
 
-						<!-- Maintenance Message Textarea -->
-						<div v-show="form.maintenance_mode === '1'" class="space-y-2 transition-all duration-300">
-							<label class="block text-[12px] font-bold text-gray-700 dark:text-zinc-300">Pesan Maintenance Publik</label>
-							<textarea
-								v-model="form.maintenance_message"
-								rows="4"
-								placeholder="Tulis pesan penjelasan mengapa situs sedang dalam pemeliharaan..."
-								class="w-full bg-gray-50 dark:bg-zinc-800/40 border border-gray-200 dark:border-zinc-700 rounded-lg px-3.5 py-2.5 text-[13px] font-medium text-gray-800 dark:text-zinc-100 focus:ring-2 focus:ring-black dark:focus:ring-zinc-600 focus:border-transparent outline-none transition-all resize-none"
-							></textarea>
-							<p class="text-[10px] text-gray-400 dark:text-zinc-500">Pesan ini akan dibaca oleh pengunjung umum yang mengakses halaman luar.</p>
+						<!-- Detailed Maintenance Settings (Visible when mode is enabled) -->
+						<div v-show="form.maintenance_mode === '1'" class="space-y-5 transition-all duration-300">
+							
+							<!-- Maintenance Message Textarea -->
+							<div class="space-y-1.5">
+								<label for="maintenance_message_input" class="block text-[12px] font-bold text-gray-700 dark:text-zinc-300">Pesan Maintenance Publik</label>
+								<textarea
+									id="maintenance_message_input"
+									v-model="form.maintenance_message"
+									rows="3"
+									placeholder="Tulis pesan penjelasan mengapa situs sedang dalam pemeliharaan..."
+									class="w-full bg-gray-50 dark:bg-zinc-800/40 border border-gray-200 dark:border-zinc-700 rounded-lg px-3.5 py-2.5 text-[13px] font-medium text-gray-800 dark:text-zinc-100 focus:ring-2 focus:ring-black dark:focus:ring-zinc-600 focus:border-transparent outline-none transition-all resize-none"
+								></textarea>
+								<p class="text-[10px] text-gray-400 dark:text-zinc-500">Pesan ini akan dibaca oleh pengunjung umum yang mengakses halaman luar.</p>
+							</div>
+
+							<!-- Estimated End Time Field with Modern Picker Modal Trigger -->
+							<div class="space-y-1.5">
+								<div class="flex items-center justify-between">
+									<label class="block text-[12px] font-bold text-gray-700 dark:text-zinc-300">
+										Estimasi Waktu Selesai (Opsional)
+									</label>
+									<button
+										v-if="form.maintenance_estimated_end"
+										type="button"
+										@click="form.maintenance_estimated_end = ''"
+										class="text-[11px] font-bold text-red-500 hover:text-red-700 transition-colors flex items-center gap-1 cursor-pointer bg-transparent border-0"
+									>
+										<X class="w-3 h-3" /> Kosongkan Waktu
+									</button>
+								</div>
+								<div
+									@click="openDatePickerModal"
+									class="w-full bg-gray-50 hover:bg-gray-100/80 dark:bg-zinc-800/40 dark:hover:bg-zinc-800/80 border border-gray-200 dark:border-zinc-700 rounded-lg px-3.5 py-2.5 flex items-center justify-between cursor-pointer transition-all group select-none"
+								>
+									<div class="flex items-center gap-2.5 text-[13px] font-medium text-gray-800 dark:text-zinc-100">
+										<Calendar class="w-4 h-4 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform" />
+										<span v-if="form.maintenance_estimated_end" class="font-bold text-blue-600 dark:text-blue-400">
+											{{ form.maintenance_estimated_end }}
+										</span>
+										<span v-else class="text-gray-400 dark:text-zinc-500 font-normal">
+											Klik untuk memilih tanggal & jam selesai dari kalender...
+										</span>
+									</div>
+									<span class="text-[11px] font-bold text-gray-500 group-hover:text-black dark:group-hover:text-white transition-colors">
+										Pilih Kalender & Jam →
+									</span>
+								</div>
+								<p class="text-[10px] text-gray-400 dark:text-zinc-500">Jika diatur, badge perkiraan waktu selesai akan tampil otomatis di atas judul halaman publik.</p>
+							</div>
+
+							<!-- Emergency Contact Channels (Email & WhatsApp) -->
+							<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+								
+								<!-- Contact Email Field -->
+								<div class="space-y-1.5">
+									<label for="maintenance_contact_email_input" class="block text-[12px] font-bold text-gray-700 dark:text-zinc-300">
+										Email Kontak Bantuan (Admin Email)
+									</label>
+									<div class="relative">
+										<Mail class="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+										<input
+											id="maintenance_contact_email_input"
+											type="email"
+											v-model="form.maintenance_contact_email"
+											placeholder="admin@fmikom.ac.id"
+											class="w-full bg-gray-50 dark:bg-zinc-800/40 border border-gray-200 dark:border-zinc-700 rounded-lg pl-10 pr-3.5 py-2.5 text-[13px] font-medium text-gray-800 dark:text-zinc-100 focus:ring-2 focus:ring-black dark:focus:ring-zinc-600 focus:border-transparent outline-none transition-all"
+										/>
+									</div>
+									<p class="text-[10px] text-gray-400 dark:text-zinc-500">Tombol email hanya akan muncul jika field ini terisi.</p>
+								</div>
+
+								<!-- Contact WhatsApp Field -->
+								<div class="space-y-1.5">
+									<label for="maintenance_contact_wa_input" class="block text-[12px] font-bold text-gray-700 dark:text-zinc-300">
+										Nomor WhatsApp Helpdesk
+									</label>
+									<div class="relative">
+										<MessageSquare class="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+										<input
+											id="maintenance_contact_wa_input"
+											type="text"
+											v-model="form.maintenance_contact_wa"
+											placeholder="628123456789"
+											class="w-full bg-gray-50 dark:bg-zinc-800/40 border border-gray-200 dark:border-zinc-700 rounded-lg pl-10 pr-3.5 py-2.5 text-[13px] font-medium text-gray-800 dark:text-zinc-100 focus:ring-2 focus:ring-black dark:focus:ring-zinc-600 focus:border-transparent outline-none transition-all"
+										/>
+									</div>
+									<p class="text-[10px] text-gray-400 dark:text-zinc-500">Format: 628xxx. Tombol WA hanya akan muncul jika nomor terisi.</p>
+								</div>
+							</div>
+
+							<!-- Custom Website URL Field -->
+							<div class="space-y-1.5">
+								<label for="maintenance_website_url_input" class="block text-[12px] font-bold text-gray-700 dark:text-zinc-300">
+									Website Resmi / Situs Alternatif (Opsional)
+								</label>
+								<div class="relative">
+									<Globe class="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+									<input
+										id="maintenance_website_url_input"
+										type="text"
+										v-model="form.maintenance_website_url"
+										placeholder="https://fmikom.unugha.ac.id (Kosongkan untuk domain saat ini)"
+										class="w-full bg-gray-50 dark:bg-zinc-800/40 border border-gray-200 dark:border-zinc-700 rounded-lg pl-10 pr-3.5 py-2.5 text-[13px] font-medium text-gray-800 dark:text-zinc-100 focus:ring-2 focus:ring-black dark:focus:ring-zinc-600 focus:border-transparent outline-none transition-all"
+									/>
+								</div>
+								<p class="text-[10px] text-gray-400 dark:text-zinc-500">Link yang dibuka saat pengunjung mengklik tombol website.</p>
+							</div>
+
 						</div>
 
 						<div class="p-4 bg-blue-50/70 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40 rounded-xl flex items-start gap-3">
@@ -995,6 +1265,174 @@ const flushCache = async () => {
 								Simpan Sitelink
 							</button>
 						</div>
+					</div>
+				</div>
+			</div>
+		</Transition>
+
+		<!-- MAINTENANCE DATETIME PICKER MODAL -->
+		<Transition
+			enter-active-class="transition duration-200 ease-out"
+			enter-from-class="opacity-0"
+			leave-active-class="transition duration-150 ease-in"
+			leave-to-class="opacity-0"
+		>
+			<div
+				v-if="isDatePickerOpen"
+				class="fixed inset-0 z-50 overflow-y-auto"
+			>
+				<div class="flex min-h-screen items-center justify-center p-4 text-center sm:p-0">
+					<div class="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity" @click="closeDatePickerModal"></div>
+
+					<div class="relative transform overflow-hidden rounded-3xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-md p-6 space-y-4">
+						
+						<!-- Modal Header -->
+						<div class="flex items-center justify-between border-b border-gray-100 dark:border-zinc-800 pb-3">
+							<div class="flex items-center gap-2.5">
+								<div class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
+									<Calendar class="w-4 h-4" />
+								</div>
+								<div>
+									<h3 class="text-[14.5px] font-bold text-gray-900 dark:text-zinc-100 leading-tight">
+										Pilih Jadwal Estimasi Selesai
+									</h3>
+									<p class="text-[10.5px] text-gray-400 font-medium">Tentukan tanggal dan jam pemulihan sistem</p>
+								</div>
+							</div>
+							<button type="button" @click="closeDatePickerModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-zinc-200 cursor-pointer border-0 bg-transparent p-1 rounded-lg">
+								<X class="w-4.5 h-4.5" />
+							</button>
+						</div>
+
+						<!-- Quick Presets -->
+						<div>
+							<span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-2">Pilihan Cepat:</span>
+							<div class="grid grid-cols-3 gap-1.5 text-[11px] font-bold">
+								<button type="button" @click="applyQuickPreset(30)" class="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-blue-50 dark:bg-zinc-800 dark:hover:bg-blue-950/40 text-gray-700 hover:text-blue-600 dark:text-zinc-300 dark:hover:text-blue-400 transition-colors border-0 cursor-pointer">
+									+30 Menit
+								</button>
+								<button type="button" @click="applyQuickPreset(60)" class="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-blue-50 dark:bg-zinc-800 dark:hover:bg-blue-950/40 text-gray-700 hover:text-blue-600 dark:text-zinc-300 dark:hover:text-blue-400 transition-colors border-0 cursor-pointer">
+									+1 Jam
+								</button>
+								<button type="button" @click="applyQuickPreset(120)" class="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-blue-50 dark:bg-zinc-800 dark:hover:bg-blue-950/40 text-gray-700 hover:text-blue-600 dark:text-zinc-300 dark:hover:text-blue-400 transition-colors border-0 cursor-pointer">
+									+2 Jam
+								</button>
+								<button type="button" @click="applyQuickPreset(240)" class="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-blue-50 dark:bg-zinc-800 dark:hover:bg-blue-950/40 text-gray-700 hover:text-blue-600 dark:text-zinc-300 dark:hover:text-blue-400 transition-colors border-0 cursor-pointer">
+									+4 Jam
+								</button>
+								<button type="button" @click="applyPresetTonight" class="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-blue-50 dark:bg-zinc-800 dark:hover:bg-blue-950/40 text-gray-700 hover:text-blue-600 dark:text-zinc-300 dark:hover:text-blue-400 transition-colors border-0 cursor-pointer">
+									Malam Ini (23:59)
+								</button>
+								<button type="button" @click="applyPresetTomorrowMorning" class="px-2.5 py-1.5 rounded-lg bg-gray-100 hover:bg-blue-50 dark:bg-zinc-800 dark:hover:bg-blue-950/40 text-gray-700 hover:text-blue-600 dark:text-zinc-300 dark:hover:text-blue-400 transition-colors border-0 cursor-pointer">
+									Besok (08:00)
+								</button>
+							</div>
+						</div>
+
+						<!-- Calendar Month Selector -->
+						<div class="bg-gray-50/70 dark:bg-zinc-800/30 border border-gray-100 dark:border-zinc-800 rounded-2xl p-3.5 space-y-3">
+							<div class="flex items-center justify-between">
+								<button type="button" @click="prevPickerMonth" class="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-600 dark:text-zinc-300 transition-colors border-0 cursor-pointer">
+									<ChevronLeft class="w-4 h-4" />
+								</button>
+								<span class="text-[13px] font-bold text-gray-800 dark:text-zinc-200">
+									{{ monthNamesId[currentPickerMonth] }} {{ currentPickerYear }}
+								</span>
+								<button type="button" @click="nextPickerMonth" class="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-600 dark:text-zinc-300 transition-colors border-0 cursor-pointer">
+									<ChevronRight class="w-4 h-4" />
+								</button>
+							</div>
+
+							<!-- Day Names Header -->
+							<div class="grid grid-cols-7 text-center text-[10.5px] font-bold text-gray-400 dark:text-zinc-500">
+								<span v-for="d in dayNamesId" :key="d">{{ d }}</span>
+							</div>
+
+							<!-- Days Grid -->
+							<div class="grid grid-cols-7 gap-1 text-center text-[12px]">
+								<button
+									v-for="(item, idx) in pickerDaysInMonth"
+									:key="idx"
+									type="button"
+									@click="item.isCurrentMonth && selectPickerDay(item.day)"
+									:disabled="!item.isCurrentMonth"
+									:class="[
+										'h-8 w-8 mx-auto rounded-xl flex items-center justify-center font-bold transition-all border-0 cursor-pointer',
+										!item.isCurrentMonth ? 'text-gray-300 dark:text-zinc-600 cursor-not-allowed opacity-30' : '',
+										item.isSelected ? 'bg-blue-600 text-white shadow-sm' : item.isCurrentMonth ? 'hover:bg-blue-50 dark:hover:bg-blue-950/40 text-gray-800 dark:text-zinc-200' : '',
+										item.isToday && !item.isSelected ? 'border border-blue-400 text-blue-600 dark:text-blue-400' : ''
+									]"
+								>
+									{{ item.day }}
+								</button>
+							</div>
+						</div>
+
+						<!-- Time Selector -->
+						<div class="bg-gray-50/70 dark:bg-zinc-800/30 border border-gray-100 dark:border-zinc-800 rounded-2xl p-3.5 flex items-center justify-between">
+							<div class="flex items-center gap-2">
+								<Clock class="w-4 h-4 text-blue-600 dark:text-blue-400" />
+								<span class="text-[12.5px] font-bold text-gray-800 dark:text-zinc-200">Waktu Selesai (WIB)</span>
+							</div>
+							<div class="flex items-center gap-1.5">
+								<!-- Hour Input -->
+								<select
+									v-model="pickerHour"
+									class="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-[13px] font-bold text-gray-800 dark:text-zinc-100 outline-none cursor-pointer"
+								>
+									<option v-for="h in 24" :key="h - 1" :value="h - 1">
+										{{ String(h - 1).padStart(2, '0') }}
+									</option>
+								</select>
+								<span class="font-bold text-gray-400">:</span>
+								<!-- Minute Input -->
+								<select
+									v-model="pickerMinute"
+									class="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-[13px] font-bold text-gray-800 dark:text-zinc-100 outline-none cursor-pointer"
+								>
+									<option v-for="m in [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 59]" :key="m" :value="m">
+										{{ String(m).padStart(2, '0') }}
+									</option>
+								</select>
+								<span class="text-[11px] font-black text-blue-600 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded-md">WIB</span>
+							</div>
+						</div>
+
+						<!-- Selected Result Preview Box -->
+						<div class="p-3 bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-800/80 rounded-xl text-center">
+							<span class="text-[10.5px] text-blue-700 dark:text-blue-300 font-medium">Hasil Format yang Ditampilkan:</span>
+							<p class="text-[13px] font-black text-blue-900 dark:text-blue-200 mt-0.5">
+								{{ formatSelectedDateString }}
+							</p>
+						</div>
+
+						<!-- Footer Action Buttons -->
+						<div class="pt-2 border-t border-gray-100 dark:border-zinc-800 flex items-center justify-between gap-2">
+							<button
+								type="button"
+								@click="clearPickerSelection"
+								class="px-3.5 py-2 text-[12px] font-bold text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl transition-colors border-0 cursor-pointer"
+							>
+								Kosongkan
+							</button>
+							<div class="flex items-center gap-2">
+								<button
+									type="button"
+									@click="closeDatePickerModal"
+									class="px-4 py-2 border border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl text-[12px] font-bold text-gray-600 dark:text-zinc-300 bg-white dark:bg-zinc-900 transition-colors cursor-pointer"
+								>
+									Batal
+								</button>
+								<button
+									type="button"
+									@click="applyPickerSelection"
+									class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[12px] font-black transition-all shadow-md shadow-blue-500/20 flex items-center gap-1.5 cursor-pointer border-0"
+								>
+									<Check class="w-4 h-4" /> Terapkan Waktu
+								</button>
+							</div>
+						</div>
+
 					</div>
 				</div>
 			</div>

@@ -117,6 +117,9 @@ class LogbookController extends Controller
 
     public function downloadCurrentPeriod(Request $request)
     {
-        return $this->logbookExportService->downloadCurrentPeriod($request->user()->id);
+        return $this->logbookExportService->downloadCurrentPeriod(
+            $request->user()->id,
+            $request->integer('pendaftaran'),
+        );
     }
 }

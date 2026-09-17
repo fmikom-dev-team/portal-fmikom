@@ -25,11 +25,15 @@ class PlacementIndexService
         $registrationId = $request->integer('pendaftaran');
         $allowedStatuses = ['approved', 'aktif', 'selesai'];
 
+        if ($status !== 'all' && ! in_array($status, $allowedStatuses, true)) {
+            $status = 'all';
+        }
+
         $query = PendaftaranMagang::query()
             ->when($withRelations, fn (Builder $builder) => $builder->with(['mahasiswa', 'perusahaan']))
             ->whereIn('status', $allowedStatuses);
 
-        if ($status !== '' && $status !== 'all' && in_array($status, $allowedStatuses, true)) {
+        if ($status !== 'all') {
             $query->where('status', $status);
         }
 
@@ -48,7 +52,7 @@ class PlacementIndexService
         }
 
         if ($period !== '') {
-            [$start, $end] = array_pad(explode('__', $period, 2), 2, null);
+            [$start, $end] = $this->resolvePeriod($period) ?? [null, null];
 
             if (filled($start) && filled($end)) {
                 $query
@@ -82,9 +86,15 @@ class PlacementIndexService
     public function buildFilters(Request $request): array
     {
         $registrationId = $request->integer('pendaftaran');
+        $status = (string) $request->string('status', 'all');
+        $allowedStatuses = ['approved', 'aktif', 'selesai'];
+
+        if ($status !== 'all' && ! in_array($status, $allowedStatuses, true)) {
+            $status = 'all';
+        }
 
         return [
-            'status' => (string) $request->string('status', 'all'),
+            'status' => $status,
             'search' => trim((string) $request->string('search', '')),
             'period' => trim((string) $request->string('period', '')),
             'pendaftaran' => $registrationId > 0 ? $registrationId : null,
@@ -137,8 +147,8 @@ class PlacementIndexService
                 ->count(),
             'eligible_with_current_filters' => $this->buildIndexQuery($request)
                 ->where('status', 'aktif')
-                ->get()
-                ->filter(fn (PendaftaranMagang $pendaftaran) => $pendaftaran->canBeMarkedComplete())
+                ->whereNotNull('tanggal_selesai')
+                ->whereDate('tanggal_selesai', '<', now()->toDateString())
                 ->count(),
         ];
     }
@@ -200,10 +210,18 @@ class PlacementIndexService
     private function transformPlacement(PendaftaranMagang $pendaftaran): array
     {
         $canAssign = $pendaftaran->status === 'approved';
+        $company = $pendaftaran->perusahaan;
+        $companyReady = $company?->is_active === true
+            && filled($company->latitude)
+            && filled($company->longitude)
+            && (float) $company->radius_valid_meter > 0
+            && filled($company->jam_masuk)
+            && filled($company->jam_pulang);
         $hasPlacementData = filled($pendaftaran->perusahaan_id)
             && filled($pendaftaran->dosen_pembimbing_id)
             && filled($pendaftaran->tanggal_mulai)
-            && filled($pendaftaran->tanggal_selesai);
+            && filled($pendaftaran->tanggal_selesai)
+            && $companyReady;
         $canCompleteNow = $pendaftaran->canBeMarkedComplete();
 
         return [
@@ -244,5 +262,28 @@ class PlacementIndexService
         }
 
         return Carbon::parse($date)->translatedFormat('d M Y');
+    }
+
+    private function resolvePeriod(string $period): ?array
+    {
+        [$start, $end] = array_pad(explode('__', $period, 2), 2, null);
+
+        if (! is_string($start) || ! is_string($end)) {
+            return null;
+        }
+
+        foreach ([$start, $end] as $date) {
+            if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+                return null;
+            }
+
+            [$year, $month, $day] = array_map('intval', explode('-', $date));
+
+            if (! checkdate($month, $day, $year)) {
+                return null;
+            }
+        }
+
+        return $start <= $end ? [$start, $end] : null;
     }
 }

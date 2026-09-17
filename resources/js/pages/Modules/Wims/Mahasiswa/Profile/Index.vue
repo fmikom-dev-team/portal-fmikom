@@ -30,7 +30,6 @@ import { Input } from '@/components/ui/input';
 import {
     Card,
     CardContent,
-    CardDescription,
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
@@ -59,6 +58,14 @@ type ProfileProps = {
     fakultas?: string | null;
     role?: string | null;
     status_approval?: string | null;
+    is_active?: boolean | null;
+};
+
+type PeriodOption = {
+    id?: number | string | null;
+    label?: string | null;
+    period_label?: string | null;
+    status_label?: string | null;
     is_active?: boolean | null;
 };
 
@@ -209,13 +216,13 @@ const removePhoto = () => {
 
 const registrationStatusLabel = computed(() => {
     const status = props.registration?.status;
-    if (status === 'approved') return 'Approved';
+    if (status === 'approved') return 'Disetujui';
     if (status === 'aktif') return 'Aktif';
     if (status === 'selesai') return 'Selesai';
     if (status === 'revisi') return 'Revisi';
-    if (status === 'rejected') return 'Rejected';
-    if (status === 'pending') return 'Pending';
-    return 'Belum Mendaftar';
+    if (status === 'rejected') return 'Ditolak';
+    if (status === 'pending') return 'Menunggu Review';
+    return 'Belum Mengajukan';
 });
 
 const registrationStatusClass = computed(() => {
@@ -445,7 +452,6 @@ const handleDragLeave = () => { isDraggingOver.value = false; };
 
             <!-- Page Header -->
             <section class="rounded-xl border border-wims-border bg-wims-card px-5 py-4 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)] sm:px-6 sm:py-5">
-                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">WIMS Mahasiswa</p>
                 <h1 class="mt-2 text-[24px] font-semibold tracking-tight text-slate-950 dark:text-white sm:text-[28px]">
                     Profil Mahasiswa
                 </h1>
@@ -469,9 +475,6 @@ const handleDragLeave = () => { isDraggingOver.value = false; };
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <p class="text-sm font-semibold text-wims-text">Kelengkapan Profil</p>
-                        <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                            Lengkapi data agar sistem WIMS dapat memproses pengajuan Anda.
-                        </p>
                     </div>
                     <span class="text-2xl font-bold" :class="completionTextColor">
                         {{ completionScore }}%
@@ -503,16 +506,13 @@ const handleDragLeave = () => { isDraggingOver.value = false; };
                 <Card class="rounded-xl border border-wims-border bg-wims-card py-0 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)]">
                     <CardHeader class="border-b border-wims-border/80 px-5 pt-5 pb-4 sm:px-6 sm:pt-6">
                         <CardTitle class="text-xl text-slate-950 dark:text-white">Identitas Mahasiswa</CardTitle>
-                        <CardDescription class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                            Data diri, akademik, kontak, dan status magang dalam satu halaman yang ringkas.
-                        </CardDescription>
                     </CardHeader>
                     <CardContent class="px-5 pt-5 pb-5 sm:px-6 sm:pt-6 sm:pb-6">
                         <form class="space-y-6" @submit.prevent="submitProfileUpdate">
 
                             <!-- Photo + Name Row -->
-                            <section class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                                <div class="flex min-w-0 flex-1 flex-col gap-4 sm:flex-row sm:items-start">
+                            <section class="flex flex-col items-center gap-4 text-center lg:flex-row lg:items-start lg:justify-between lg:text-left">
+                                <div class="flex w-full min-w-0 flex-1 flex-col items-center gap-4 sm:flex-row sm:items-start sm:text-left lg:w-auto">
 
                                     <!-- ----------------------------------------
                                          FITUR 6 - DRAG & DROP AVATAR
@@ -570,7 +570,7 @@ const handleDragLeave = () => { isDraggingOver.value = false; };
                                                 ----------------------------- -->
                                                 <button
                                                     type="button"
-                                                    class="group mt-1 flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 transition-colors hover:text-slate-800"
+                                                    class="group mt-1 flex items-center justify-center gap-1.5 text-sm text-slate-500 transition-colors hover:text-slate-800 dark:text-slate-400 sm:justify-start"
                                                     @click="copyToClipboard(profile.email, 'email')"
                                                     :title="profile.email ? 'Salin ' + profile.email : ''"
                                                 >
@@ -580,7 +580,7 @@ const handleDragLeave = () => { isDraggingOver.value = false; };
                                                     <Copy v-else class="size-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-60" />
                                                 </button>
                                             </div>
-                                            <div class="flex flex-wrap items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                                            <div class="flex flex-wrap items-center justify-center gap-2 text-sm text-slate-600 dark:text-slate-400 sm:justify-start">
                                                 <span>{{ profile.role || 'Mahasiswa' }}</span>
                                                 <Badge
                                                     variant="outline"
@@ -601,7 +601,7 @@ const handleDragLeave = () => { isDraggingOver.value = false; };
                                                 class="hidden"
                                                 @change="handlePhotoChange"
                                             />
-                                            <p v-if="selectedFileName" class="text-xs text-slate-500 dark:text-slate-400">
+                                            <p v-if="selectedFileName" class="text-xs text-slate-500 dark:text-slate-400 sm:text-left">
                                                 File: {{ selectedFileName }}
                                             </p>
                                             <InputError :message="profileForm.errors.foto_profil" />
@@ -609,7 +609,7 @@ const handleDragLeave = () => { isDraggingOver.value = false; };
                                     </div>
                                 </div>
 
-                                <div class="flex flex-wrap gap-2 lg:justify-end">
+                                <div class="flex w-full flex-wrap justify-center gap-2 lg:w-auto lg:justify-end">
                                     <Button
                                         type="button"
                                         variant="outline"
@@ -640,9 +640,6 @@ const handleDragLeave = () => { isDraggingOver.value = false; };
                                     <section class="space-y-3">
                                         <div>
                                             <h3 class="text-base font-semibold text-slate-950 dark:text-white">Data Akademik</h3>
-                                            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                                                Identitas akademik utama yang dipakai di WIMS.
-                                            </p>
                                         </div>
                                         <dl class="grid gap-x-6 gap-y-4 sm:grid-cols-2">
                                             <div>
@@ -690,9 +687,6 @@ const handleDragLeave = () => { isDraggingOver.value = false; };
                                     <section class="space-y-3 border-t border-wims-border pt-5">
                                         <div>
                                             <h3 class="text-base font-semibold text-slate-950 dark:text-white">Kontak</h3>
-                                            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                                                Lengkapi kanal komunikasi dan profil profesional agar data mahasiswa lebih siap dipakai lintas modul.
-                                            </p>
                                         </div>
                                         <div class="grid gap-4 sm:grid-cols-2">
                                             <div class="grid gap-2">
@@ -793,9 +787,6 @@ const handleDragLeave = () => { isDraggingOver.value = false; };
                                 <section class="space-y-3 border-t border-wims-border pt-5 lg:border-t-0 lg:border-l lg:pl-6 lg:pt-0">
                                     <div>
                                         <h3 class="text-base font-semibold text-slate-950 dark:text-white">Status Magang</h3>
-                                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                                            Ringkasan singkat pengajuan atau penempatan PKL/magang terbaru di WIMS.
-                                        </p>
                                     </div>
                                     <dl class="space-y-3">
                                         <div>

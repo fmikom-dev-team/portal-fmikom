@@ -116,6 +116,9 @@ const cameraError = ref('');
 const cameraStream = ref<MediaStream | null>(null);
 const cameraFrameReady = ref(false);
 const cameraRequestId = ref(0);
+const locationRequestId = ref(0);
+const verificationTimeoutId = ref<number | null>(null);
+const verificationTimeoutMs = 20000;
 const maxPhotoSizeBytes = 5 * 1024 * 1024;
 const maxPhotoSizeLabel = '5 MB';
 const absencePanelOpen = ref(false);
@@ -224,6 +227,8 @@ watch(
     { immediate: true },
 );
 
+// Tombol presensi tetap nonaktif sampai lokasi valid, foto tersedia, dan request
+// sebelumnya selesai, sehingga pengiriman ganda dari UI dapat ditekan.
 const canSubmit = computed(
     () =>
         !!attendance.value.pendaftaran_id &&
@@ -234,6 +239,8 @@ const canSubmit = computed(
 );
 
 const checkout = () => {
+    // Backend tetap menjadi penentu akhir valid/tidaknya check-out walaupun
+    // frontend sudah lebih dulu menahan tombol saat syarat belum terpenuhi.
     form.post('/wims/absensi/checkout', {
         forceFormData: true,
     });
@@ -368,7 +375,7 @@ const locationAccuracyThreshold = computed(() => {
 const locationAccuracyLabel = computed(() =>
     locationAccuracy.value === null
         ? '-'
-        : `Â±${Math.round(locationAccuracy.value)} m`,
+        : `±${Math.round(locationAccuracy.value)} m`,
 );
 
 const locationStatusLabel = computed(() =>
@@ -397,9 +404,13 @@ const photoStatusLabel = computed(() =>
           : 'Foto Belum Ada',
 );
 
-const isVerificationLoading = computed(
-    () => locationState.value === 'loading' || cameraState.value === 'loading',
-);
+const isVerificationLoading = computed(() => {
+    const hasError =
+        locationState.value === 'error' || cameraState.value === 'error';
+
+    return !hasError &&
+        (locationState.value === 'loading' || cameraState.value === 'loading');
+});
 
 const canCapturePhoto = computed(
     () =>
@@ -411,6 +422,8 @@ const canCapturePhoto = computed(
 const verificationButtonText = computed(() =>
     isVerificationLoading.value
         ? 'Menyiapkan Kamera & Lokasi...'
+        : locationState.value === 'error' || cameraState.value === 'error'
+          ? 'Coba Lagi'
         : form.photo || cameraState.value === 'ready'
           ? 'Ambil Ulang Kamera & Lokasi'
           : 'Mulai Kamera & Lokasi',
@@ -429,7 +442,7 @@ const locationBadgeLabel = computed(() =>
         ? 'Lokasi Valid'
         : locationValidationState.value === 'outside'
           ? 'Di Luar Area Presensi'
-          : 'Lokasi Belum Tervalidasi',
+          : 'Belum Valid',
 );
 
 const verificationSummaryMessage = computed(() => {
@@ -563,7 +576,7 @@ const absenceStatusLabel = (value?: string | null) => {
         return 'Dibatalkan';
     }
 
-    return 'Pending';
+    return 'Menunggu Review';
 };
 
 const absenceStatusClass = (value?: string | null) => {
@@ -657,8 +670,11 @@ const setPhotoFile = (file: File | null) => {
 
 const clearVerificationSession = () => {
     cameraRequestId.value += 1;
+    locationRequestId.value += 1;
     stopCamera();
     cameraError.value = '';
+    locationError.value = '';
+    locationState.value = 'idle';
     locationAccuracy.value = null;
     cameraFrameReady.value = false;
     revokePreview();
@@ -1057,6 +1073,8 @@ const capturePhoto = async () => {
 
 const getLocation = () =>
     new Promise<boolean>((resolve) => {
+        const requestId = ++locationRequestId.value;
+
         if (!navigator.geolocation) {
             locationState.value = 'error';
             locationError.value =
@@ -1071,6 +1089,7 @@ const getLocation = () =>
         locationError.value = '';
         locationAccuracy.value = null;
 
+        // Geolocation API hanya dijalankan setelah browser memberi izin akses lokasi.
         const requestPosition = () =>
             new Promise<GeolocationPosition>(
                 (positionResolve, positionReject) => {
@@ -1087,6 +1106,12 @@ const getLocation = () =>
             );
 
         const setLocationError = (message: string, resetAccuracy = true) => {
+            if (requestId !== locationRequestId.value) {
+                resolve(false);
+
+                return;
+            }
+
             form.latitude = null;
             form.longitude = null;
 
@@ -1103,6 +1128,12 @@ const getLocation = () =>
 
         Promise.allSettled(attempts)
             .then((results) => {
+                if (requestId !== locationRequestId.value) {
+                    resolve(false);
+
+                    return;
+                }
+
                 const fulfilled = results
                     .filter(
                         (
@@ -1153,6 +1184,8 @@ const getLocation = () =>
                     return;
                 }
 
+                // Beberapa pembacaan GPS dicoba sekaligus lalu dipilih yang paling akurat
+                // agar koordinat yang dikirim tidak sekadar bergantung pada sampel pertama.
                 const bestPosition = fulfilled.reduce((best, current) =>
                     current.coords.accuracy < best.coords.accuracy
                         ? current
@@ -1193,10 +1226,30 @@ const startVerification = async () => {
     clearVerificationSession();
     form.clearErrors('photo');
 
-    await Promise.all([getLocation(), openCamera()]);
+    const timeoutId = window.setTimeout(() => {
+        cameraRequestId.value += 1;
+        locationRequestId.value += 1;
+        stopCamera();
+        locationState.value = 'error';
+        locationError.value = 'Pengambilan lokasi terlalu lama. Periksa izin browser atau GPS, lalu coba lagi.';
+        cameraState.value = 'error';
+        cameraError.value = 'Verifikasi terlalu lama. Pastikan izin kamera sudah diberikan, lalu coba lagi.';
+    }, verificationTimeoutMs);
+    verificationTimeoutId.value = timeoutId;
+
+    try {
+        await Promise.all([getLocation(), openCamera()]);
+    } finally {
+        if (verificationTimeoutId.value === timeoutId) {
+            window.clearTimeout(timeoutId);
+            verificationTimeoutId.value = null;
+        }
+    }
 };
 
 const submit = () => {
+    // Koordinat, foto, dan pendaftaran aktif dikirim sebagai FormData ke Laravel
+    // melalui Inertia, lalu divalidasi ulang oleh controller dan service backend.
     form.post(absensiRoutes.store.url(), {
         forceFormData: true,
         preserveScroll: true,
@@ -1216,6 +1269,10 @@ onBeforeUnmount(() => {
 
     stopCamera();
     revokePreview();
+
+    if (verificationTimeoutId.value) {
+        window.clearTimeout(verificationTimeoutId.value);
+    }
 });
 </script>
 
@@ -1249,10 +1306,10 @@ onBeforeUnmount(() => {
                     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div class="max-w-2xl">
                             <h1 class="text-[20px] font-bold tracking-tight text-white sm:text-[24px] lg:text-[30px] leading-[1.15]">
-                                Presensi Harian
+                                Presensi
                             </h1>
                             <p class="mt-2 text-[13px] leading-relaxed text-white/78 dark:text-white/70 sm:text-sm">
-                                Catat kehadiran magang hari ini dengan cepat dan akurat.
+                                Catat kehadiran magang hari ini
                             </p>
                         </div>
 
@@ -1308,7 +1365,7 @@ onBeforeUnmount(() => {
             <!-- Main Content Grid -->
             <div class="grid items-start gap-4 xl:grid-cols-[1.5fr_1fr] xl:gap-5">
                 <!-- Left Column: Presensi Card -->
-                <div class="rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-300 hover:shadow-[0_8px_24px_-8px_rgba(0,0,0,0.06)]">
+                <div class="order-2 rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-300 hover:shadow-[0_8px_24px_-8px_rgba(0,0,0,0.06)] xl:col-start-1 xl:row-start-1 xl:order-none">
                     <!-- Card Header -->
                     <div class="border-b border-wims-border/50 px-5 py-4 sm:px-6">
                         <div class="flex items-center gap-3">
@@ -1471,14 +1528,14 @@ onBeforeUnmount(() => {
                 </div>
 
                 <!-- Right Column: Sidebar -->
-                <aside class="space-y-4">
+                <aside class="contents xl:col-start-2 xl:row-start-1 xl:order-none xl:flex xl:flex-col xl:gap-4">
                     <!-- Pengajuan Ketidakhadiran Card -->
-                    <div class="rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-300 hover:shadow-[0_8px_24px_-8px_rgba(0,0,0,0.06)]">
+                    <div class="order-3 mt-4 rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-300 hover:shadow-[0_8px_24px_-8px_rgba(0,0,0,0.06)] xl:order-none xl:mt-0">
                         <div class="p-5 sm:p-6">
                             <div class="flex items-start justify-between gap-3">
                                 <div>
-                                    <p class="text-[15px] font-bold text-wims-text">Ketidakhadiran</p>
-                                    <p class="text-[11px] text-slate-500 dark:text-slate-400">Ajukan izin atau sakit</p>
+                                    <p class="text-sm font-bold text-wims-text sm:text-[15px]">Ketidakhadiran</p>
+                                    <p class="text-[11px] text-slate-500 dark:text-slate-400 sm:text-xs">Ajukan ketidakhadiran</p>
                                 </div>
                                 <Badge variant="outline" class="shrink-0 rounded-full border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:text-slate-400">
                                     {{ absenceRequests.length }} riwayat
@@ -1491,21 +1548,21 @@ onBeforeUnmount(() => {
                             </div>
 
                             <Button type="button" class="mt-4 h-10 w-full rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-xs font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:shadow-blue-500/30 active:scale-[0.98] dark:from-[#214FAF] dark:to-[#0F6FBE] dark:shadow-[0_14px_34px_-18px_rgba(8,15,30,0.84)] dark:hover:shadow-[0_18px_38px_-18px_rgba(8,15,30,0.92)]" @click="absencePanelOpen = true">
-                                Ajukan Izin / Sakit
+                                Ajukan Ketidakhadiran
                             </Button>
                         </div>
                     </div>
 
                     <!-- Informasi Lokasi Card -->
-                    <div class="rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-300 hover:shadow-[0_8px_24px_-8px_rgba(0,0,0,0.06)]">
+                    <div class="order-1 rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-300 hover:shadow-[0_8px_24px_-8px_rgba(0,0,0,0.06)] xl:order-none">
                         <div class="p-5 sm:p-6">
                             <div class="flex items-center gap-3">
                                 <div class="flex size-10 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
                                     <Building2 class="size-5" />
                                 </div>
                                 <div>
-                                    <p class="text-[15px] font-bold text-wims-text">Informasi Lokasi</p>
-                                    <p class="text-[11px] text-slate-500 dark:text-slate-400">Data perusahaan & radius</p>
+                                    <p class="text-sm font-bold text-wims-text sm:text-[15px]">Informasi Lokasi</p>
+                                    <p class="text-[11px] text-slate-500 dark:text-slate-400 sm:text-xs">Data perusahaan & radius</p>
                                 </div>
                             </div>
 

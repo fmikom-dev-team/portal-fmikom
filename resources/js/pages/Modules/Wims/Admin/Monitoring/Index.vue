@@ -36,7 +36,6 @@ type Filters = {
     search?: string;
     period?: string;
     company_id?: number | null;
-    dosen_id?: number | null;
 };
 
 type Summary = {
@@ -118,7 +117,6 @@ const props = defineProps<{
     registrations: RegistrationPagination;
     options: {
         companies: OptionItem[];
-        dosen: OptionItem[];
         periods: OptionItem[];
     };
 }>();
@@ -128,9 +126,6 @@ const search = ref(props.filters.search || '');
 const companyId = ref(
     props.filters.company_id ? String(props.filters.company_id) : '',
 );
-const dosenId = ref(
-    props.filters.dosen_id ? String(props.filters.dosen_id) : '',
-);
 const period = ref(props.filters.period || '');
 
 watch(
@@ -139,7 +134,6 @@ watch(
         status.value = filters.status || 'all';
         search.value = filters.search || '';
         companyId.value = filters.company_id ? String(filters.company_id) : '';
-        dosenId.value = filters.dosen_id ? String(filters.dosen_id) : '';
         period.value = filters.period || '';
     },
     { deep: true },
@@ -181,7 +175,6 @@ const applyFilters = () => {
             search: search.value || undefined,
             period: period.value || undefined,
             company_id: companyId.value || undefined,
-            dosen_id: dosenId.value || undefined,
         },
         {
             preserveScroll: true,
@@ -195,7 +188,6 @@ const resetFilters = () => {
     status.value = 'all';
     search.value = '';
     companyId.value = '';
-    dosenId.value = '';
     period.value = '';
     applyFilters();
 };
@@ -357,7 +349,7 @@ const studentInitial = (name?: string | null) => {
 
             <CardContent class="space-y-5 px-5 py-5">
                 <form
-                    class="grid gap-3 xl:grid-cols-[minmax(0,1fr)_160px_180px_180px_180px_auto_auto]"
+                    class="grid gap-3 xl:grid-cols-[minmax(260px,1fr)_150px_170px_190px_auto_auto]"
                     @submit.prevent="applyFilters"
                 >
                     <div class="relative">
@@ -367,14 +359,14 @@ const studentInitial = (name?: string | null) => {
                         <Input
                             v-model="search"
                             type="text"
-                            placeholder="Cari mahasiswa, perusahaan, atau dosen..."
+                            placeholder="Cari mahasiswa atau perusahaan..."
                             class="h-10 rounded-lg border-zinc-200 bg-zinc-50 pl-10"
                         />
                     </div>
 
                     <select
                         v-model="status"
-                        class="h-10 w-full max-w-[180px] rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 transition outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10"
+                        class="h-10 w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 transition outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10"
                     >
                         <option value="all">Semua Status</option>
                         <option value="pending">Menunggu</option>
@@ -387,7 +379,7 @@ const studentInitial = (name?: string | null) => {
 
                     <select
                         v-model="period"
-                        class="h-10 w-full max-w-[180px] rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 transition outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10"
+                        class="h-10 w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 transition outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10"
                     >
                         <option value="">Semua Periode</option>
                         <option
@@ -400,7 +392,7 @@ const studentInitial = (name?: string | null) => {
                     </select>
                     <select
                         v-model="companyId"
-                        class="h-10 w-full max-w-[180px] rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 transition outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10"
+                        class="h-10 w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 transition outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10"
                     >
                         <option value="">Semua Perusahaan</option>
                         <option
@@ -409,20 +401,6 @@ const studentInitial = (name?: string | null) => {
                             :value="String(company.id)"
                         >
                             {{ company.label }}
-                        </option>
-                    </select>
-
-                    <select
-                        v-model="dosenId"
-                        class="h-10 w-full max-w-[180px] rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 transition outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10"
-                    >
-                        <option value="">Semua Dosen</option>
-                        <option
-                            v-for="dosen in options.dosen"
-                            :key="dosen.id"
-                            :value="String(dosen.id)"
-                        >
-                            {{ dosen.label }}
                         </option>
                     </select>
 

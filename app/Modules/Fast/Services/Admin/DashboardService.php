@@ -29,10 +29,8 @@ class DashboardService
     {
         $query = Surat::query()
             ->with(['pemohon', 'subjectUser', 'jenisSurat', 'dataEntries'])
-            ->where('type', 'pengajuan')
-            ->whereIn('status', [
-                Surat::STATUS_PENDING,
-            ]);
+            ->orderByRaw('COALESCE(tanggal_pengajuan, created_at) desc')
+            ->orderByDesc('id');
 
         $search = $request->string('search')->trim()->toString();
         $categoryId = $request->integer('category_id');
@@ -51,8 +49,6 @@ class DashboardService
         }
 
         $surats = $query
-            ->orderByDesc('tanggal_pengajuan')
-            ->orderByDesc('created_at')
             ->paginate(6)
             ->through(fn (Surat $surat): array => [
                 'id' => $surat->id,
@@ -71,6 +67,34 @@ class DashboardService
                 ],
             ])
             ->withQueryString();
+
+        $quickSubmissions = Surat::query()
+            ->with(['pemohon', 'subjectUser', 'jenisSurat', 'dataEntries'])
+            ->where('type', 'pengajuan')
+            ->whereIn('status', [
+                Surat::STATUS_PENDING,
+                Surat::STATUS_REVISION_REQUESTED,
+            ])
+            ->orderByRaw('COALESCE(tanggal_pengajuan, created_at) desc')
+            ->orderByDesc('id')
+            ->limit(4)
+            ->get()
+            ->map(fn (Surat $surat): array => [
+                'id' => $surat->id,
+                'type' => $surat->type,
+                'status' => $surat->status,
+                'can_approve' => $surat->canBeValidatedByAdmin(),
+                'can_edit' => $surat->canBeEditedByAdmin(),
+                'needs_admin_completion' => $surat->hasIncompleteCampusData(),
+                'tanggal_pengajuan' => optional($surat->tanggal_pengajuan ?? $surat->created_at)?->toISOString(),
+                'created_at' => optional($surat->created_at)?->toISOString(),
+                'subject' => $surat->serializeSubjectIdentity(),
+                'pemohon' => $surat->serializePemohonIdentity(),
+                'jenisSurat' => [
+                    'id' => $surat->jenisSurat?->id,
+                    'nama' => $surat->jenisSurat?->nama,
+                ],
+            ]);
 
         $adminActivityHistory = Surat::query()
             ->with(['subjectUser', 'jenisSurat'])
@@ -92,8 +116,9 @@ class DashboardService
                 ],
             ]);
 
-        return Inertia::render('admin/dashboard/Index', [
+        return Inertia::render('Modules/Fast/Admin/dashboard/Index', [
             'surats' => $surats,
+            'quickSubmissions' => $quickSubmissions,
             'summary' => (function (): array {
                 $counts = Surat::query()
                     ->where('type', 'pengajuan')
@@ -149,7 +174,7 @@ class DashboardService
 
         $isiSurat = json_decode((string) $surat->isi_surat, true);
 
-        return Inertia::render('admin/dashboard/Show', [
+        return Inertia::render('Modules/Fast/Admin/dashboard/Show', [
             'id' => $surat->id,
             'type' => $surat->type,
             'nomor_surat' => $surat->nomor_surat,
@@ -172,6 +197,7 @@ class DashboardService
                 'type' => $lampiran->tipe,
             ])->values(),
             'tanggal_pengajuan' => optional($surat->tanggal_pengajuan ?? $surat->created_at)?->toISOString(),
+            'tanggal_kebutuhan' => optional($surat->tanggal_kebutuhan)?->toDateString(),
             'status' => $surat->status,
             'hasAttachmentDocument' => $this->outgoingAttachmentService->hasStudentAttachment($surat),
             'latest_rejection' => (function () use ($surat): ?array {

@@ -98,7 +98,7 @@ class TemplateService
             }
         });
 
-        return to_route($this->templatesIndexRouteName())->with('success', 'Jenis surat berhasil dihapus.');
+        return to_route($this->templatesIndexRouteName())->with('fast_success', 'Jenis surat berhasil dihapus.');
     }
 
     public function toggleActive(JenisSurat $jenisSurat): RedirectResponse
@@ -109,7 +109,7 @@ class TemplateService
 
         return to_route($this->templatesIndexRouteName(), [
             'jenis_surat_id' => $jenisSurat->id,
-        ])->with('success', 'Status jenis surat diperbarui.');
+        ])->with('fast_success', 'Status jenis surat diperbarui.');
     }
 
     public function duplicate(JenisSurat $jenisSurat): RedirectResponse

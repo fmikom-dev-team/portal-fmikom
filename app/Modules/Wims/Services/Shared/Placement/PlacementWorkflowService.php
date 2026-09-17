@@ -3,10 +3,13 @@
 namespace App\Modules\Wims\Services\Shared\Placement;
 
 use App\Models\Magang\PendaftaranMagang;
+use App\Models\Magang\PerusahaanMitra;
 use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class PlacementWorkflowService
 {
@@ -17,13 +20,15 @@ class PlacementWorkflowService
 
     public function validatePlacementUpdate(Request $request): array
     {
-        return $request->validate([
+        $validated = $request->validate([
             'perusahaan_id' => ['required', 'integer', Rule::exists('perusahaan_mitras', 'id')],
             'dosen_pembimbing_id' => [
                 'required',
                 'integer',
                 Rule::exists('users', 'id'),
                 function (string $attribute, mixed $value, \Closure $fail): void {
+                    // Backend memastikan dosen pembimbing memang memiliki role WIMS aktif,
+                    // sehingga pilihan dosen tidak hanya dibatasi oleh daftar di UI.
                     if (! $this->wimsModuleRoleService->hasActiveRole((int) $value, 'dosen')) {
                         $fail('Dosen pembimbing yang dipilih tidak memiliki assignment aktif pada modul WIMS.');
                     }
@@ -33,6 +38,16 @@ class PlacementWorkflowService
             'perusahaan_id.required' => 'Perusahaan wajib dipilih sebelum penempatan disimpan.',
             'dosen_pembimbing_id.required' => 'Dosen pembimbing wajib dipilih sebelum penempatan disimpan.',
         ]);
+
+        $company = PerusahaanMitra::query()->find($validated['perusahaan_id']);
+
+        if (! $company || ! $this->isReadyForPlacement($company)) {
+            throw ValidationException::withMessages([
+                'perusahaan_id' => 'Perusahaan harus aktif dan memiliki lokasi, radius presensi, serta jam kerja yang lengkap sebelum dipilih untuk penempatan.',
+            ]);
+        }
+
+        return $validated;
     }
 
     public function validateSelectedCompletion(Request $request): array
@@ -53,10 +68,14 @@ class PlacementWorkflowService
 
     public function hasCompletePlacementData(PendaftaranMagang $pendaftaran): bool
     {
+        $pendaftaran->loadMissing('perusahaan');
+
         return filled($pendaftaran->perusahaan_id)
             && filled($pendaftaran->dosen_pembimbing_id)
             && filled($pendaftaran->tanggal_mulai)
-            && filled($pendaftaran->tanggal_selesai);
+            && filled($pendaftaran->tanggal_selesai)
+            && $pendaftaran->perusahaan instanceof PerusahaanMitra
+            && $this->isReadyForPlacement($pendaftaran->perusahaan);
     }
 
     public function canComplete(PendaftaranMagang $pendaftaran): bool
@@ -76,12 +95,30 @@ class PlacementWorkflowService
 
     public function resolveCompletableFiltered(Request $request): Collection
     {
-        return $this->placementIndexService->buildIndexQuery($request)
-            ->where('status', 'aktif')
+        return $this->buildCompletableFilteredQuery($request)
             ->with('mahasiswa')
             ->get()
             // Batch selesai tetap disaring ulang di backend supaya aman walau selection/filter di UI berubah.
             ->filter(fn (PendaftaranMagang $pendaftaran) => $pendaftaran->canBeMarkedComplete())
             ->values();
+    }
+
+    public function buildCompletableFilteredQuery(Request $request): Builder
+    {
+        return $this->placementIndexService->buildIndexQuery($request)
+            ->where('status', 'aktif')
+            ->whereNotNull('tanggal_selesai')
+            ->whereDate('tanggal_selesai', '<', now()->toDateString());
+    }
+
+    public function isReadyForPlacement(?PerusahaanMitra $company): bool
+    {
+        return $company instanceof PerusahaanMitra
+            && $company->is_active
+            && filled($company->latitude)
+            && filled($company->longitude)
+            && (float) $company->radius_valid_meter > 0
+            && filled($company->jam_masuk)
+            && filled($company->jam_pulang);
     }
 }

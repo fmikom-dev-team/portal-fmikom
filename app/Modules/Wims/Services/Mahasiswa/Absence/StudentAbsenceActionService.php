@@ -7,7 +7,9 @@ use App\Models\Magang\PendaftaranMagang;
 use App\Modules\Wims\Services\Shared\Absence\KetidakhadiranService;
 use App\Support\WimsStorage;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Throwable;
 
 class StudentAbsenceActionService
 {
@@ -24,21 +26,37 @@ class StudentAbsenceActionService
 
     public function submit(PendaftaranMagang $pendaftaran, int $mahasiswaId, array $validated, ?UploadedFile $bukti): void
     {
-        $resolved = $this->ketidakhadiranService->validateSubmission($pendaftaran, $validated);
-        $buktiPath = $this->storeProof($bukti);
+        $buktiPath = null;
 
-        KetidakhadiranMagang::query()->create([
-            'pendaftaran_id' => $pendaftaran->id,
-            'mahasiswa_id' => $mahasiswaId,
-            'perusahaan_id' => $pendaftaran->perusahaan_id,
-            'tanggal_mulai' => $resolved['start_date']->toDateString(),
-            'tanggal_selesai' => $resolved['end_date']->toDateString(),
-            'jenis' => $validated['jenis'],
-            'alasan' => $validated['alasan'],
-            'bukti_path' => $buktiPath,
-            'status' => 'pending',
-            'submitted_at' => now(),
-        ]);
+        try {
+            DB::transaction(function () use ($pendaftaran, $mahasiswaId, $validated, $bukti, &$buktiPath): void {
+                $lockedRegistration = PendaftaranMagang::query()
+                    ->with('perusahaan')
+                    ->lockForUpdate()
+                    ->findOrFail($pendaftaran->id);
+                $resolved = $this->ketidakhadiranService->validateSubmission($lockedRegistration, $validated);
+                $buktiPath = $this->storeProof($bukti);
+
+                KetidakhadiranMagang::query()->create([
+                    'pendaftaran_id' => $lockedRegistration->id,
+                    'mahasiswa_id' => $mahasiswaId,
+                    'perusahaan_id' => $lockedRegistration->perusahaan_id,
+                    'tanggal_mulai' => $resolved['start_date']->toDateString(),
+                    'tanggal_selesai' => $resolved['end_date']->toDateString(),
+                    'jenis' => $validated['jenis'],
+                    'alasan' => $validated['alasan'],
+                    'bukti_path' => $buktiPath,
+                    'status' => 'pending',
+                    'submitted_at' => now(),
+                ]);
+            });
+        } catch (Throwable $exception) {
+            if ($buktiPath) {
+                WimsStorage::delete($buktiPath);
+            }
+
+            throw $exception;
+        }
     }
 
     public function cancel(KetidakhadiranMagang $ketidakhadiran): void

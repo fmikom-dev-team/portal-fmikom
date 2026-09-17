@@ -27,6 +27,7 @@ class QrVerificationController extends Controller
 
     public function verify(Request $request, string $token): Response
     {
+        // Lookup publik hanya berdasarkan token QR yang terdaftar di tabel surat.
         $surat = Surat::where('qr_token', $token)
             ->with(['pemohon.programStudi', 'jenisSurat.category', 'approvedBy', 'approvalFlows.approver'])
             ->first();
@@ -41,6 +42,7 @@ class QrVerificationController extends Controller
             ]);
         }
 
+        // Dokumen valid hanya jika surat sudah finished dan QR tidak dicabut.
         $isValidated = $surat->status === 'finished';
         $isRevoked = $surat->qrCode?->status === 'revoked';
 
@@ -57,6 +59,7 @@ class QrVerificationController extends Controller
                 : ($isValidated
                     ? 'Dokumen ini sah dan telah divalidasi.'
                     : 'Dokumen belum divalidasi.'),
+            // Data publik dibatasi ke metadata dokumen agar isi surat dan lampiran tidak terekspos.
             'surat' => [
                 'nomor_surat' => $surat->nomor_surat,
                 'jenis_surat' => $surat->jenisSurat?->nama,
@@ -88,6 +91,7 @@ class QrVerificationController extends Controller
     public function image(string $token): SymfonyResponse
     {
         $baseUrl = config('app.url') ?? 'http://localhost';
+        // QR ini hanya memuat URL verifikasi, bukan data surat langsung.
         $url = rtrim($baseUrl, '/').'/verifikasi-qr/'.$token;
 
         $writer = new Writer(

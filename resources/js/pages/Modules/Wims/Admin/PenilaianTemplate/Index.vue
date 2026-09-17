@@ -560,7 +560,7 @@ const submitLabel = computed(() =>
                         class="flex flex-col gap-3 md:flex-row md:items-center"
                         @submit.prevent="applyFilter"
                     >
-                        <div class="relative">
+                        <div class="relative min-w-0 flex-1">
                             <Search
                                 class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-zinc-400"
                             />
@@ -568,7 +568,7 @@ const submitLabel = computed(() =>
                                 v-model="search"
                                 type="text"
                                 placeholder="Cari nama template atau komponen..."
-                                class="h-10 rounded-lg border-zinc-200 bg-zinc-50 pl-10 md:w-full"
+                                class="h-10 w-full rounded-lg border-zinc-200 bg-zinc-50 pl-10 md:min-w-0"
                             />
                         </div>
 

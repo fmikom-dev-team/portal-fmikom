@@ -39,7 +39,7 @@ class AttendanceExportService
             ->orderByDesc('id');
 
         $fileNamePrefix = 'riwayat-presensi';
-        $headerRegistration = $registrations->first();
+        $headerRegistration = null;
 
         if ($scope === 'current') {
             $currentRegistration = $this->studentPeriodResolverService->resolveSelectedRegistrationFromCollection($registrations, $registrationId);
@@ -73,8 +73,8 @@ class AttendanceExportService
                 'program_studi' => $student->programStudi?->nama ?? '-',
             ],
             'internship' => [
-                'company' => $headerRegistration?->perusahaan?->nama ?? '-',
-                'period' => $headerRegistration?->periodLabel() ?? '-',
+                'company' => $scope === 'current' ? ($headerRegistration?->perusahaan?->nama ?? '-') : 'Seluruh perusahaan',
+                'period' => $scope === 'current' ? ($headerRegistration?->periodLabel() ?? '-') : 'Seluruh periode',
                 'supervisor_lecturer' => $headerRegistration?->dosenPembimbing?->name ?? '-',
                 'mentor' => $headerRegistration?->finalMentor()?->name ?? '-',
             ],
