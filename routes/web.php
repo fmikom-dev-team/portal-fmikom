@@ -459,6 +459,7 @@ Route::middleware(['auth', CheckRole::class.':super-admin,admin,dosen,akademik']
         Route::post('posts/upload-image', [PortalPostController::class, 'uploadImage'])->name('posts.upload-image');
         Route::get('fetchUrl', [PortalPostController::class, 'fetchUrl'])->name('posts.fetch-url');
         Route::post('posts/upload-file', [PortalPostController::class, 'uploadFile'])->name('posts.upload-file');
+        Route::post('posts/upload-chunk', [PortalPostController::class, 'uploadChunk'])->name('posts.upload-chunk');
         Route::resource('categories', PortalCategoryController::class);
         Route::resource('media', PortalMediaController::class)->parameters(['media' => 'media']);
         Route::resource('academic-calendars', PortalAcademicCalendarController::class);

@@ -14,7 +14,14 @@ class VirusScannerService
      */
     public function scan(UploadedFile $file): array
     {
-        $enabled = env('CLAMAV_ENABLED', false);
+        $enabled = (bool) env('CLAMAV_ENABLED', false);
+        if (! $enabled) {
+            return [
+                'safe' => true,
+                'reason' => 'ClamAV disabled in configuration',
+            ];
+        }
+
         $host = env('CLAMAV_HOST', '127.0.0.1');
         $port = env('CLAMAV_PORT', 3310);
         $timeout = 2; // Short timeout to check availability first
@@ -23,20 +30,11 @@ class VirusScannerService
         $socket = @stream_socket_client($socketUri, $errno, $errstr, $timeout);
 
         if (! $socket) {
-            if ($enabled) {
-                Log::error("[VirusScannerService] Connection to ClamAV daemon failed: {$errstr} ({$errno}) at {$socketUri}");
-
-                return [
-                    'safe' => false,
-                    'reason' => 'Layanan pemindaian antivirus (ClamAV) offline. Unggah berkas dibatalkan demi keamanan.',
-                ];
-            }
-
-            Log::warning('[VirusScannerService] ClamAV is disabled in .env and offline. Skipping scan for file: '.$file->getClientOriginalName());
+            Log::error("[VirusScannerService] Connection to ClamAV daemon failed: {$errstr} ({$errno}) at {$socketUri}");
 
             return [
-                'safe' => true,
-                'reason' => 'ClamAV disabled and offline',
+                'safe' => false,
+                'reason' => 'Layanan pemindaian antivirus (ClamAV) offline. Unggah berkas dibatalkan demi keamanan.',
             ];
         }
 
@@ -59,7 +57,7 @@ class VirusScannerService
                 ];
             }
 
-            $chunkSize = 32768; // 32KB
+            $chunkSize = 262144; // 256KB for faster streaming
             while (! feof($fileHandle)) {
                 $chunk = fread($fileHandle, $chunkSize);
                 $size = strlen($chunk);

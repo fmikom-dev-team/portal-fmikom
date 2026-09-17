@@ -3,6 +3,7 @@
 namespace App\Modules\Portal\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Portal\PortalCategory;
 use App\Models\Portal\PortalPost;
 use App\Models\Portal\PortalSetting;
 use Illuminate\Http\Request;
@@ -31,23 +32,44 @@ class PublicPostController extends Controller
             ->take(3)
             ->get();
 
+        // Get popular / latest trending posts for sidebar
+        $popularPosts = PortalPost::with(['category', 'user:id,name,foto_path'])
+            ->whereIn('status', [PortalPost::STATUS_PUBLISHED, PortalPost::STATUS_SCHEDULED])
+            ->where('published_at', '<=', now())
+            ->where('id', '!=', $post->id)
+            ->latest()
+            ->take(5)
+            ->get();
+
+        // Get categories with post count
+        $categories = PortalCategory::withCount(['posts' => function ($query) {
+            $query->whereIn('status', [PortalPost::STATUS_PUBLISHED, PortalPost::STATUS_SCHEDULED])
+                ->where('published_at', '<=', now());
+        }])
+            ->having('posts_count', '>', 0)
+            ->orderByDesc('posts_count')
+            ->take(8)
+            ->get();
+
         $previousPost = PortalPost::where('published_at', '<', $post->published_at)
             ->whereIn('status', [PortalPost::STATUS_PUBLISHED, PortalPost::STATUS_SCHEDULED])
             ->where('published_at', '<=', now())
             ->orderBy('published_at', 'desc')
-            ->first(['id', 'title', 'slug', 'meta_description']);
+            ->first(['id', 'title', 'slug', 'meta_description', 'thumbnail']);
 
         $nextPost = PortalPost::where('published_at', '>', $post->published_at)
             ->whereIn('status', [PortalPost::STATUS_PUBLISHED, PortalPost::STATUS_SCHEDULED])
             ->where('published_at', '<=', now())
             ->orderBy('published_at', 'asc')
-            ->first(['id', 'title', 'slug', 'meta_description']);
+            ->first(['id', 'title', 'slug', 'meta_description', 'thumbnail']);
 
         $settings = PortalSetting::pluck('value', 'key')->toArray();
 
         return Inertia::render('Modules/Portal/Post/Show', [
             'post' => $post,
             'relatedPosts' => $relatedPosts,
+            'popularPosts' => $popularPosts,
+            'categories' => $categories,
             'previousPost' => $previousPost,
             'nextPost' => $nextPost,
             'settings' => $settings,

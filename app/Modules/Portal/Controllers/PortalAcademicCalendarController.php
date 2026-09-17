@@ -27,7 +27,7 @@ class PortalAcademicCalendarController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'category' => 'required|string|in:akademik,kegiatan,libur,ujian,registrasi',
-            'color' => 'required|string|in:blue,green,red,amber,purple',
+            'color' => 'required|string|in:blue,green,red,amber,purple,emerald,rose,indigo,teal,orange',
         ]);
 
         PortalAcademicCalendar::create($validated);
@@ -45,7 +45,7 @@ class PortalAcademicCalendarController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'category' => 'required|string|in:akademik,kegiatan,libur,ujian,registrasi',
-            'color' => 'required|string|in:blue,green,red,amber,purple',
+            'color' => 'required|string|in:blue,green,red,amber,purple,emerald,rose,indigo,teal,orange',
         ]);
 
         $academicCalendar->update($validated);

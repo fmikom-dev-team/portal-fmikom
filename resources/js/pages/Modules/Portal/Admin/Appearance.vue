@@ -1002,295 +1002,267 @@ const submit = () => {
                     </div>
                 </div>
 
-                <!-- MAIN BODY (GRID) -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- MAIN BODY -->
+                <div class="bg-[#f8fafc] dark:bg-slate-900/50 rounded-2xl p-4 border border-dashed border-slate-300 dark:border-slate-700 flex flex-col gap-4">
+                    <div class="text-[11px] font-black tracking-widest text-slate-400 uppercase ml-2">Badan Halaman</div>
                     
-                    <!-- LEFT/MAIN COLUMN -->
-                    <div class="md:col-span-2 bg-[#f8fafc] dark:bg-slate-900/50 rounded-2xl p-4 border border-dashed border-slate-300 dark:border-slate-700 flex flex-col gap-4">
-                        <div class="text-[11px] font-black tracking-widest text-slate-400 uppercase ml-2">Badan Halaman</div>
-                        
-                        <!-- WIDGET: EVENT TIMELINE -->
-                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 flex items-center justify-between shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500">
+                    <!-- WIDGET: EVENT TIMELINE -->
+                    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 flex items-center justify-between shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500">
+                        <div class="flex items-center gap-4">
+                            <button
+                                type="button"
+                                @click="requestToggle('show_events', 'Event & Agenda Timeline')"
+                                :class="[
+                                    'relative inline-flex h-6.5 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-xs',
+                                    form.show_events ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
+                                ]"
+                                title="Geser untuk Aktif/Nonaktifkan"
+                            >
+                                <span :class="['pointer-events-none inline-block h-5.5 w-5.5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out', form.show_events ? 'translate-x-5.5' : 'translate-x-0']"></span>
+                            </button>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h4 :class="['text-[14px] font-bold', form.show_events ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Event & Agenda Timeline</h4>
+                                    <span :class="['px-2 py-0.5 rounded-full text-[10px] font-extrabold border', form.show_events ? 'bg-emerald-50 text-emerald-600 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400']">
+                                        {{ form.show_events ? 'Aktif' : 'Nonaktif' }}
+                                    </span>
+                                </div>
+                                <p class="text-[12px] font-bold text-slate-500 mt-0.5">Otomatis dari Data Event FMIKOM</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- WIDGET: SHOWCASE PORTOFOLIO -->
+                    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 flex items-center justify-between shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500">
+                        <div class="flex items-center gap-4">
+                            <button
+                                type="button"
+                                @click="requestToggle('show_showcase', 'Portofolio Showcase Mahasiswa')"
+                                :class="[
+                                    'relative inline-flex h-6.5 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-xs',
+                                    form.show_showcase ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
+                                ]"
+                                title="Geser untuk Aktif/Nonaktifkan"
+                            >
+                                <span :class="['pointer-events-none inline-block h-5.5 w-5.5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out', form.show_showcase ? 'translate-x-5.5' : 'translate-x-0']"></span>
+                            </button>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h4 :class="['text-[14px] font-bold', form.show_showcase ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Portofolio Showcase Mahasiswa</h4>
+                                    <span :class="['px-2 py-0.5 rounded-full text-[10px] font-extrabold border', form.show_showcase ? 'bg-emerald-50 text-emerald-600 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400']">
+                                        {{ form.show_showcase ? 'Aktif' : 'Nonaktif' }}
+                                    </span>
+                                </div>
+                                <p class="text-[12px] font-bold text-slate-500 mt-0.5">Pengaturan Karya Unggulan (Modul PAGI)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- WIDGET: PETA ALUMNI -->
+                    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 flex items-center justify-between shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500">
+                        <div class="flex items-center gap-4">
+                            <button
+                                type="button"
+                                @click="requestToggle('show_alumni', 'Peta Sebaran Alumni & Statistik')"
+                                :class="[
+                                    'relative inline-flex h-6.5 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-xs',
+                                    form.show_alumni ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
+                                ]"
+                                title="Geser untuk Aktif/Nonaktifkan"
+                            >
+                                <span :class="['pointer-events-none inline-block h-5.5 w-5.5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out', form.show_alumni ? 'translate-x-5.5' : 'translate-x-0']"></span>
+                            </button>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h4 :class="['text-[14px] font-bold', form.show_alumni ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Peta Sebaran Alumni & Statistik</h4>
+                                    <span :class="['px-2 py-0.5 rounded-full text-[10px] font-extrabold border', form.show_alumni ? 'bg-emerald-50 text-emerald-600 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400']">
+                                        {{ form.show_alumni ? 'Aktif' : 'Nonaktif' }}
+                                    </span>
+                                </div>
+                                <p class="text-[12px] font-bold text-slate-500 mt-0.5">Seksi Visual Peta & Statistik Tracer</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- WIDGET: POSTS / BERITA -->
+                    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 flex items-center justify-between shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500">
+                        <div class="flex items-center gap-4">
+                            <button
+                                type="button"
+                                @click="requestToggle('show_features', 'Berita & Postingan')"
+                                :class="[
+                                    'relative inline-flex h-6.5 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-xs',
+                                    form.show_features ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
+                                ]"
+                                title="Geser untuk Aktif/Nonaktifkan"
+                            >
+                                <span :class="['pointer-events-none inline-block h-5.5 w-5.5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out', form.show_features ? 'translate-x-5.5' : 'translate-x-0']"></span>
+                            </button>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h4 :class="['text-[14px] font-bold', form.show_features ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Berita & Postingan</h4>
+                                    <span :class="['px-2 py-0.5 rounded-full text-[10px] font-extrabold border', form.show_features ? 'bg-emerald-50 text-emerald-600 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400']">
+                                        {{ form.show_features ? 'Aktif' : 'Nonaktif' }}
+                                    </span>
+                                </div>
+                                <p class="text-[12px] font-bold text-slate-500 mt-0.5">Otomatis dari Portal Admin Posts</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- WIDGET: PARTNERS -->
+                    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500">
+                        <div class="flex items-center justify-between">
                             <div class="flex items-center gap-4">
                                 <button
                                     type="button"
-                                    @click="requestToggle('show_events', 'Event & Agenda Timeline')"
+                                    @click="requestToggle('show_partners', 'Mitra & Partner')"
                                     :class="[
                                         'relative inline-flex h-6.5 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-xs',
-                                        form.show_events ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
+                                        form.show_partners ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
                                     ]"
                                     title="Geser untuk Aktif/Nonaktifkan"
                                 >
-                                    <span :class="['pointer-events-none inline-block h-5.5 w-5.5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out', form.show_events ? 'translate-x-5.5' : 'translate-x-0']"></span>
+                                    <span :class="['pointer-events-none inline-block h-5.5 w-5.5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out', form.show_partners ? 'translate-x-5.5' : 'translate-x-0']"></span>
                                 </button>
                                 <div>
                                     <div class="flex items-center gap-2">
-                                        <h4 :class="['text-[14px] font-bold', form.show_events ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Event & Agenda Timeline</h4>
-                                        <span :class="['px-2 py-0.5 rounded-full text-[10px] font-extrabold border', form.show_events ? 'bg-emerald-50 text-emerald-600 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400']">
-                                            {{ form.show_events ? 'Aktif' : 'Nonaktif' }}
+                                        <h4 :class="['text-[14px] font-bold', form.show_partners ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Mitra & Partner</h4>
+                                        <span :class="['px-2 py-0.5 rounded-full text-[10px] font-extrabold border', form.show_partners ? 'bg-emerald-50 text-emerald-600 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400']">
+                                            {{ form.show_partners ? 'Aktif' : 'Nonaktif' }}
                                         </span>
                                     </div>
-                                    <p class="text-[12px] font-bold text-slate-500 mt-0.5">Otomatis dari Data Event FMIKOM</p>
+                                    <p class="text-[12px] font-bold text-slate-500 mt-0.5">
+                                        {{ form.partners.length > 0 ? `${form.partners.length} logo mitra tersimpan` : 'Logo-logo mitra / kerjasama' }}
+                                    </p>
                                 </div>
                             </div>
+                            <button type="button" @click="openEditModal('partners')" class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-slate-500 hover:text-[#2563EB] hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors border border-slate-200 dark:border-slate-600">
+                                <Edit2 class="w-3.5 h-3.5"/>
+                            </button>
                         </div>
 
-                        <!-- WIDGET: SHOWCASE PORTOFOLIO -->
-                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 flex items-center justify-between shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500">
-                            <div class="flex items-center gap-4">
-                                <button
-                                    type="button"
-                                    @click="requestToggle('show_showcase', 'Portofolio Showcase Mahasiswa')"
-                                    :class="[
-                                        'relative inline-flex h-6.5 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-xs',
-                                        form.show_showcase ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
-                                    ]"
-                                    title="Geser untuk Aktif/Nonaktifkan"
-                                >
-                                    <span :class="['pointer-events-none inline-block h-5.5 w-5.5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out', form.show_showcase ? 'translate-x-5.5' : 'translate-x-0']"></span>
-                                </button>
-                                <div>
-                                    <div class="flex items-center gap-2">
-                                        <h4 :class="['text-[14px] font-bold', form.show_showcase ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Portofolio Showcase Mahasiswa</h4>
-                                        <span :class="['px-2 py-0.5 rounded-full text-[10px] font-extrabold border', form.show_showcase ? 'bg-emerald-50 text-emerald-600 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400']">
-                                            {{ form.show_showcase ? 'Aktif' : 'Nonaktif' }}
-                                        </span>
-                                    </div>
-                                    <p class="text-[12px] font-bold text-slate-500 mt-0.5">Pengaturan Karya Unggulan (Modul PAGI)</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- WIDGET: PETA ALUMNI -->
-                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 flex items-center justify-between shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500">
-                            <div class="flex items-center gap-4">
-                                <button
-                                    type="button"
-                                    @click="requestToggle('show_alumni', 'Peta Sebaran Alumni & Statistik')"
-                                    :class="[
-                                        'relative inline-flex h-6.5 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-xs',
-                                        form.show_alumni ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
-                                    ]"
-                                    title="Geser untuk Aktif/Nonaktifkan"
-                                >
-                                    <span :class="['pointer-events-none inline-block h-5.5 w-5.5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out', form.show_alumni ? 'translate-x-5.5' : 'translate-x-0']"></span>
-                                </button>
-                                <div>
-                                    <div class="flex items-center gap-2">
-                                        <h4 :class="['text-[14px] font-bold', form.show_alumni ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Peta Sebaran Alumni & Statistik</h4>
-                                        <span :class="['px-2 py-0.5 rounded-full text-[10px] font-extrabold border', form.show_alumni ? 'bg-emerald-50 text-emerald-600 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400']">
-                                            {{ form.show_alumni ? 'Aktif' : 'Nonaktif' }}
-                                        </span>
-                                    </div>
-                                    <p class="text-[12px] font-bold text-slate-500 mt-0.5">Seksi Visual Peta & Statistik Tracer</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- WIDGET: POSTS / BERITA -->
-                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 flex items-center justify-between shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500">
-                            <div class="flex items-center gap-4">
-                                <button
-                                    type="button"
-                                    @click="requestToggle('show_features', 'Berita & Postingan')"
-                                    :class="[
-                                        'relative inline-flex h-6.5 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-xs',
-                                        form.show_features ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
-                                    ]"
-                                    title="Geser untuk Aktif/Nonaktifkan"
-                                >
-                                    <span :class="['pointer-events-none inline-block h-5.5 w-5.5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out', form.show_features ? 'translate-x-5.5' : 'translate-x-0']"></span>
-                                </button>
-                                <div>
-                                    <div class="flex items-center gap-2">
-                                        <h4 :class="['text-[14px] font-bold', form.show_features ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Berita & Postingan</h4>
-                                        <span :class="['px-2 py-0.5 rounded-full text-[10px] font-extrabold border', form.show_features ? 'bg-emerald-50 text-emerald-600 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400']">
-                                            {{ form.show_features ? 'Aktif' : 'Nonaktif' }}
-                                        </span>
-                                    </div>
-                                    <p class="text-[12px] font-bold text-slate-500 mt-0.5">Otomatis dari Portal Admin Posts</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- WIDGET: PARTNERS -->
-                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-4">
-                                    <button
-                                        type="button"
-                                        @click="requestToggle('show_partners', 'Mitra & Partner')"
-                                        :class="[
-                                            'relative inline-flex h-6.5 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-xs',
-                                            form.show_partners ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
-                                        ]"
-                                        title="Geser untuk Aktif/Nonaktifkan"
-                                    >
-                                        <span :class="['pointer-events-none inline-block h-5.5 w-5.5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out', form.show_partners ? 'translate-x-5.5' : 'translate-x-0']"></span>
+                        <!-- Inline Logo Previews -->
+                        <div v-if="form.partners.length > 0" class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+                            <div class="flex flex-wrap gap-2">
+                                <div v-for="logo in form.partners" :key="typeof logo === 'object' ? logo.logo : logo"
+                                    class="relative group h-10 w-18 rounded-lg overflow-hidden border border-slate-100 bg-white flex items-center justify-center p-1 shadow-sm">
+                                    <img :src="typeof logo === 'object' ? logo.logo : logo" alt="Logo partner" class="max-w-full max-h-full object-contain">
+                                    <button type="button" @click="removeExistingPartner(typeof logo === 'object' ? logo.logo : logo)"
+                                        class="absolute inset-0 bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <X class="w-3 h-3"/>
                                     </button>
-                                    <div>
-                                        <div class="flex items-center gap-2">
-                                            <h4 :class="['text-[14px] font-bold', form.show_partners ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Mitra & Partner</h4>
-                                            <span :class="['px-2 py-0.5 rounded-full text-[10px] font-extrabold border', form.show_partners ? 'bg-emerald-50 text-emerald-600 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400']">
-                                                {{ form.show_partners ? 'Aktif' : 'Nonaktif' }}
-                                            </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- WIDGET: BENEFITS -->
+                    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 flex items-center justify-between shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500">
+                        <div class="flex items-center gap-4">
+                            <button
+                                type="button"
+                                @click="requestToggle('show_benefits', 'Seksi Keunggulan')"
+                                :class="[
+                                    'relative inline-flex h-6.5 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-xs',
+                                    form.show_benefits ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
+                                ]"
+                                title="Geser untuk Aktif/Nonaktifkan"
+                            >
+                                <span :class="['pointer-events-none inline-block h-5.5 w-5.5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out', form.show_benefits ? 'translate-x-5.5' : 'translate-x-0']"></span>
+                            </button>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h4 :class="['text-[14px] font-bold', form.show_benefits ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Seksi Keunggulan</h4>
+                                    <span :class="['px-2 py-0.5 rounded-full text-[10px] font-extrabold border', form.show_benefits ? 'bg-emerald-50 text-emerald-600 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400']">
+                                        {{ form.show_benefits ? 'Aktif' : 'Nonaktif' }}
+                                    </span>
+                                </div>
+                                <p class="text-[12px] font-bold text-slate-500 mt-0.5">Gadget Teks & Ilustrasi</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" @click="openEditModal('benefits')" class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-slate-500 hover:text-[#2563EB] hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors border border-slate-200 dark:border-slate-600">
+                                <Edit2 class="w-3.5 h-3.5"/>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- WIDGET: TESTIMONIALS (Apa Kata Mereka) -->
+                    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <button
+                                    type="button"
+                                    @click="requestToggle('show_testimonials', 'Apa Kata Mereka (Testimoni)')"
+                                    :class="[
+                                        'relative inline-flex h-6.5 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-xs',
+                                        form.show_testimonials ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
+                                    ]"
+                                    title="Geser untuk Aktif/Nonaktifkan"
+                                >
+                                    <span :class="['pointer-events-none inline-block h-5.5 w-5.5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out', form.show_testimonials ? 'translate-x-5.5' : 'translate-x-0']"></span>
+                                </button>
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <h4 :class="['text-[14px] font-bold', form.show_testimonials ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Apa Kata Mereka (Testimoni)</h4>
+                                        <span :class="['px-2 py-0.5 rounded-full text-[10px] font-extrabold border', form.show_testimonials ? 'bg-emerald-50 text-emerald-600 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400']">
+                                            {{ form.show_testimonials ? 'Aktif' : 'Nonaktif' }}
+                                        </span>
+                                    </div>
+                                    <p class="text-[12px] font-bold text-slate-500 mt-0.5">
+                                        {{ form.testimonials && form.testimonials.length > 0 ? `${form.testimonials.length} testimoni civitas tersimpan` : 'Belum ada testimoni tersimpan' }}
+                                    </p>
+                                </div>
+                            </div>
+                            <button type="button" @click="openEditModal('testimonials')" class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-slate-500 hover:text-[#2563EB] hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors border border-slate-200 dark:border-slate-600" title="Kelola Testimoni">
+                                <Edit2 class="w-3.5 h-3.5"/>
+                            </button>
+                        </div>
+
+                        <!-- Inline Testimonials Mini Cards Preview -->
+                        <div v-if="form.testimonials && form.testimonials.length > 0" class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                                <div 
+                                    v-for="(item, index) in form.testimonials" 
+                                    :key="item.id || index"
+                                    @click="openEditModal('testimonials'); startEditTestimonialItem(Number(index))"
+                                    class="group relative bg-slate-50 hover:bg-blue-50/60 dark:bg-slate-900/60 dark:hover:bg-blue-950/30 border border-slate-200/80 hover:border-blue-300 dark:border-slate-700/80 dark:hover:border-blue-600 rounded-xl p-2.5 flex items-center gap-2.5 transition-all cursor-pointer shadow-2xs hover:shadow-xs"
+                                    title="Klik untuk edit testimoni ini"
+                                >
+                                    <!-- Avatar Circle -->
+                                    <div class="w-8 h-8 rounded-full overflow-hidden shrink-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center shadow-2xs">
+                                        <img 
+                                            v-if="item.avatar || item._previewUrl" 
+                                            :src="item._previewUrl || item.avatar" 
+                                            :alt="item.name" 
+                                            class="w-full h-full object-cover" 
+                                            @error="onAvatarImageError" 
+                                        />
+                                        <div v-else class="w-full h-full bg-linear-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white font-black text-[11px]">
+                                            {{ item.name ? item.name.charAt(0).toUpperCase() : '?' }}
                                         </div>
-                                        <p class="text-[12px] font-bold text-slate-500 mt-0.5">
-                                            {{ form.partners.length > 0 ? `${form.partners.length} logo mitra tersimpan` : 'Logo-logo mitra / kerjasama' }}
+                                    </div>
+
+                                    <!-- Info -->
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center justify-between gap-1">
+                                            <h6 class="text-[12px] font-bold text-slate-800 dark:text-slate-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                                {{ item.name || 'Tanpa Nama' }}
+                                            </h6>
+                                        </div>
+                                        <p v-if="item.role" class="text-[10px] font-medium text-slate-400 dark:text-slate-500 truncate">
+                                            {{ item.role }}
+                                        </p>
+                                        <p v-if="item.quote" class="text-[10px] text-slate-500 dark:text-slate-400 truncate italic">
+                                            "{{ item.quote }}"
                                         </p>
                                     </div>
                                 </div>
-                                <button type="button" @click="openEditModal('partners')" class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-slate-500 hover:text-[#2563EB] hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors border border-slate-200 dark:border-slate-600">
-                                    <Edit2 class="w-3.5 h-3.5"/>
-                                </button>
-                            </div>
-
-                            <!-- Inline Logo Previews -->
-                            <div v-if="form.partners.length > 0" class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
-                                <div class="flex flex-wrap gap-2">
-                                    <div v-for="logo in form.partners" :key="typeof logo === 'object' ? logo.logo : logo"
-                                        class="relative group h-10 w-18 rounded-lg overflow-hidden border border-slate-100 bg-white flex items-center justify-center p-1 shadow-sm">
-                                        <img :src="typeof logo === 'object' ? logo.logo : logo" alt="Logo partner" class="max-w-full max-h-full object-contain">
-                                        <button type="button" @click="removeExistingPartner(typeof logo === 'object' ? logo.logo : logo)"
-                                            class="absolute inset-0 bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <X class="w-3 h-3"/>
-                                        </button>
-                                    </div>
-                                </div>
                             </div>
                         </div>
-
-                        <!-- WIDGET: BENEFITS -->
-                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 flex items-center justify-between shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500">
-                            <div class="flex items-center gap-4">
-                                <button
-                                    type="button"
-                                    @click="requestToggle('show_benefits', 'Seksi Keunggulan')"
-                                    :class="[
-                                        'relative inline-flex h-6.5 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-xs',
-                                        form.show_benefits ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
-                                    ]"
-                                    title="Geser untuk Aktif/Nonaktifkan"
-                                >
-                                    <span :class="['pointer-events-none inline-block h-5.5 w-5.5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out', form.show_benefits ? 'translate-x-5.5' : 'translate-x-0']"></span>
-                                </button>
-                                <div>
-                                    <div class="flex items-center gap-2">
-                                        <h4 :class="['text-[14px] font-bold', form.show_benefits ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Seksi Keunggulan</h4>
-                                        <span :class="['px-2 py-0.5 rounded-full text-[10px] font-extrabold border', form.show_benefits ? 'bg-emerald-50 text-emerald-600 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400']">
-                                            {{ form.show_benefits ? 'Aktif' : 'Nonaktif' }}
-                                        </span>
-                                    </div>
-                                    <p class="text-[12px] font-bold text-slate-500 mt-0.5">Gadget Teks & Ilustrasi</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <button type="button" @click="openEditModal('benefits')" class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-slate-500 hover:text-[#2563EB] hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors border border-slate-200 dark:border-slate-600">
-                                    <Edit2 class="w-3.5 h-3.5"/>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- WIDGET: TESTIMONIALS (Apa Kata Mereka) -->
-                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-4">
-                                    <button
-                                        type="button"
-                                        @click="requestToggle('show_testimonials', 'Apa Kata Mereka (Testimoni)')"
-                                        :class="[
-                                            'relative inline-flex h-6.5 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-xs',
-                                            form.show_testimonials ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
-                                        ]"
-                                        title="Geser untuk Aktif/Nonaktifkan"
-                                    >
-                                        <span :class="['pointer-events-none inline-block h-5.5 w-5.5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out', form.show_testimonials ? 'translate-x-5.5' : 'translate-x-0']"></span>
-                                    </button>
-                                    <div>
-                                        <div class="flex items-center gap-2">
-                                            <h4 :class="['text-[14px] font-bold', form.show_testimonials ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Apa Kata Mereka (Testimoni)</h4>
-                                            <span :class="['px-2 py-0.5 rounded-full text-[10px] font-extrabold border', form.show_testimonials ? 'bg-emerald-50 text-emerald-600 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400']">
-                                                {{ form.show_testimonials ? 'Aktif' : 'Nonaktif' }}
-                                            </span>
-                                        </div>
-                                        <p class="text-[12px] font-bold text-slate-500 mt-0.5">
-                                            {{ form.testimonials && form.testimonials.length > 0 ? `${form.testimonials.length} testimoni civitas tersimpan` : 'Belum ada testimoni tersimpan' }}
-                                        </p>
-                                    </div>
-                                </div>
-                                <button type="button" @click="openEditModal('testimonials')" class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-slate-500 hover:text-[#2563EB] hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors border border-slate-200 dark:border-slate-600" title="Kelola Testimoni">
-                                    <Edit2 class="w-3.5 h-3.5"/>
-                                </button>
-                            </div>
-
-                            <!-- Inline Testimonials Mini Cards Preview -->
-                            <div v-if="form.testimonials && form.testimonials.length > 0" class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
-                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-                                    <div 
-                                        v-for="(item, index) in form.testimonials" 
-                                        :key="item.id || index"
-                                        @click="openEditModal('testimonials'); startEditTestimonialItem(Number(index))"
-                                        class="group relative bg-slate-50 hover:bg-blue-50/60 dark:bg-slate-900/60 dark:hover:bg-blue-950/30 border border-slate-200/80 hover:border-blue-300 dark:border-slate-700/80 dark:hover:border-blue-600 rounded-xl p-2.5 flex items-center gap-2.5 transition-all cursor-pointer shadow-2xs hover:shadow-xs"
-                                        title="Klik untuk edit testimoni ini"
-                                    >
-                                        <!-- Avatar Circle -->
-                                        <div class="w-8 h-8 rounded-full overflow-hidden shrink-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center shadow-2xs">
-                                            <img 
-                                                v-if="item.avatar || item._previewUrl" 
-                                                :src="item._previewUrl || item.avatar" 
-                                                :alt="item.name" 
-                                                class="w-full h-full object-cover" 
-                                                @error="onAvatarImageError" 
-                                            />
-                                            <div v-else class="w-full h-full bg-linear-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white font-black text-[11px]">
-                                                {{ item.name ? item.name.charAt(0).toUpperCase() : '?' }}
-                                            </div>
-                                        </div>
-
-                                        <!-- Info -->
-                                        <div class="flex-1 min-w-0">
-                                            <div class="flex items-center justify-between gap-1">
-                                                <h6 class="text-[12px] font-bold text-slate-800 dark:text-slate-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                                                    {{ item.name || 'Tanpa Nama' }}
-                                                </h6>
-                                            </div>
-                                            <p v-if="item.role" class="text-[10px] font-medium text-slate-400 dark:text-slate-500 truncate">
-                                                {{ item.role }}
-                                            </p>
-                                            <p v-if="item.quote" class="text-[10px] text-slate-500 dark:text-slate-400 truncate italic">
-                                                "{{ item.quote }}"
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                     </div>
 
-                    <!-- RIGHT COLUMN (SIDEBAR EQUIVALENT / SETTINGS) -->
-                    <div class="bg-[#f8fafc] dark:bg-slate-900/50 rounded-2xl p-4 border border-dashed border-slate-300 dark:border-slate-700 flex flex-col gap-4">
-                        <div class="text-[11px] font-black tracking-widest text-slate-400 uppercase ml-2">Pengaturan Umum</div>
-                        
-                        <!-- WIDGET: THEME -->
-                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 flex items-center justify-between shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500">
-                            <div class="flex items-center gap-4">
-                                <div class="w-5 h-5 flex items-center justify-center">
-                                    <div class="w-4 h-4 rounded-full" :style="{ backgroundColor: form.primary_color }"></div>
-                                </div>
-                                <div>
-                                    <h4 class="text-[14px] font-bold text-slate-800 dark:text-slate-200">Warna Tema</h4>
-                                    <p class="text-[12px] font-bold text-slate-500 mt-0.5">Aksen Primary</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <button type="button" @click="openEditModal('theme')" class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-slate-500 hover:text-[#2563EB] hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors border border-slate-200 dark:border-slate-600">
-                                    <Edit2 class="w-3.5 h-3.5"/>
-                                </button>
-                            </div>
-                        </div>
-
-                    </div>
                 </div>
             </div>
         </div>

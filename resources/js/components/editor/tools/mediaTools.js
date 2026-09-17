@@ -1,12 +1,12 @@
+import AttachesTool from "./AttachesTool";
 import { safeImport } from "./loader";
 
 /**
- * Media tools - all official @editorjs/* packages (fully compatible with v2.31)
+ * Media tools - official @editorjs/* packages + custom modern AttachesTool
  */
 export const loadMediaTools = async (uploadByFile, uploadByUrl, uploadFile) => {
-	const [Image, Attaches, Embed, LinkTool] = await Promise.all([
+	const [Image, Embed, LinkTool] = await Promise.all([
 		safeImport(import("@editorjs/image")),
-		safeImport(import("@editorjs/attaches")),
 		safeImport(import("@editorjs/embed")),
 		safeImport(import("@editorjs/link")),
 	]);
@@ -23,16 +23,14 @@ export const loadMediaTools = async (uploadByFile, uploadByUrl, uploadFile) => {
 		};
 	}
 
-	if (Attaches) {
-		result.attaches = {
-			class: Attaches,
-			config: {
-				uploader: { uploadByFile: uploadFile },
-				buttonText: "📎 Pilih File",
-				errorMessage: "Gagal mengunggah file.",
-			},
-		};
-	}
+	result.attaches = {
+		class: AttachesTool,
+		config: {
+			uploader: { uploadByFile: uploadFile },
+			buttonText: "Pilih / Drop File Lampiran (Maks 100 MB)",
+			errorMessage: "Gagal mengunggah file.",
+		},
+	};
 
 	if (Embed) {
 		result.embed = {
