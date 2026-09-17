@@ -18,10 +18,9 @@ import {
 } from "lucide-vue-next";
 import { computed, ref } from "vue";
 import BlockRenderer from "@/components/editor/renderer/BlockRenderer.vue";
+import PublicAcademicCalendar from "@/components/Portal/PublicAcademicCalendar.vue";
 import { sanitizeRich } from "@/composables/useSanitize";
 import PublicLayout from "@/layouts/PublicLayout.vue";
-
-import PublicAcademicCalendar from "@/components/Portal/PublicAcademicCalendar.vue";
 
 const props = defineProps({
 	page: Object,
