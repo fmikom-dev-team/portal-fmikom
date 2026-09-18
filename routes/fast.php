@@ -188,7 +188,7 @@ $adminRoutes = function (): void {
 | Legacy alias /fast/user/*
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'verified', 'module.context:fast'])
+Route::middleware(['auth', 'verified', 'module.context:fast,mahasiswa,dosen'])
     ->prefix('fast/user')
     ->name('fast.user.')
     ->group(function (): void {
@@ -237,8 +237,9 @@ $userRoutes = function (
         ->name('surat.cancel');
 };
 
-Route::middleware(['auth', 'verified', 'module.context:fast'])->group(function () use ($userRoutes): void {
-    Route::prefix('mahasiswa')
+Route::middleware(['auth', 'verified'])->group(function () use ($userRoutes): void {
+    Route::middleware('module.context:fast,mahasiswa')
+        ->prefix('mahasiswa')
         ->name('mahasiswa.')
         ->group(function () use ($userRoutes): void {
             $userRoutes(
@@ -249,7 +250,8 @@ Route::middleware(['auth', 'verified', 'module.context:fast'])->group(function (
             );
         });
 
-    Route::prefix('dosen')
+    Route::middleware('module.context:fast,dosen')
+        ->prefix('dosen')
         ->name('dosen.')
         ->group(function () use ($userRoutes): void {
             $userRoutes(
@@ -260,10 +262,12 @@ Route::middleware(['auth', 'verified', 'module.context:fast'])->group(function (
             );
         });
 
-    Route::get('/jenis-surat/{jenisSurat}', [MahasiswaLetterTypeController::class, 'show'])
+    Route::middleware('module.context:fast,mahasiswa')
+        ->get('/jenis-surat/{jenisSurat}', [MahasiswaLetterTypeController::class, 'show'])
         ->name('jenis-surat.show');
 
-    Route::prefix('dosen')
+    Route::middleware('module.context:fast,dosen')
+        ->prefix('dosen')
         ->name('dosen.')
         ->group(function (): void {
             Route::get('/jenis-surat/{jenisSurat}', [DosenLetterTypeController::class, 'show'])

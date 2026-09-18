@@ -2,10 +2,48 @@ import L from "leaflet";
 import { nextTick, onUnmounted, ref, shallowRef, watch } from "vue";
 import "leaflet/dist/leaflet.css";
 
-const apiKey = import.meta.env.VITE_API_MAP || "";
-const TILE_URLS = {
-	light: `https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=${apiKey}`,
-	dark: `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=${apiKey}`,
+const TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+
+const TILE_OPTIONS: L.TileLayerOptions = {
+	maxZoom: 19,
+	attribution:
+		'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+	className: "custom-osm-tiles",
+};
+
+/**
+ * Inject CSS untuk dark mode Leaflet.
+ *
+ * Tidak perlu menaruh CSS ini di app.css.
+ */
+const injectMapStyles = () => {
+	if (typeof document === "undefined") return;
+
+	const STYLE_ID = "leaflet-osm-dark-mode";
+
+	// Jangan inject dua kali
+	if (document.getElementById(STYLE_ID)) return;
+
+	const style = document.createElement("style");
+	style.id = STYLE_ID;
+
+	style.textContent = `
+		.custom-osm-tiles {
+			transition:
+				filter 200ms ease,
+				opacity 200ms ease;
+		}
+
+		.custom-osm-tiles.dark-map {
+			filter:
+				invert(90%)
+				hue-rotate(180deg)
+				brightness(85%)
+				contrast(90%);
+		}
+	`;
+
+	document.head.appendChild(style);
 };
 
 export function useLeafletMap(options?: {
@@ -15,33 +53,83 @@ export function useLeafletMap(options?: {
 }) {
 	const mapContainer = ref<HTMLElement | null>(null);
 	const map = shallowRef<L.Map | null>(null);
+
 	const isReady = ref(false);
 	const isMapLoading = ref(true);
 	const isDarkMap = ref(false);
-	const currentZoom = ref(5);
+	const currentZoom = ref(options?.zoom ?? 5);
 
 	let tileLayer: L.TileLayer | null = null;
 	let resizeObserver: ResizeObserver | null = null;
+
 	const invalidateTimers: ReturnType<typeof setTimeout>[] = [];
 
+	/**
+	 * Detect Tailwind dark mode.
+	 */
+	const detectDarkMode = () => {
+		if (typeof document === "undefined") {
+			return false;
+		}
+
+		return document.documentElement.classList.contains("dark");
+	};
+
+	/**
+	 * Apply dark mode class ke tile layer.
+	 */
+	const applyTileTheme = () => {
+		if (!tileLayer) return;
+
+		const container = tileLayer.getContainer();
+
+		if (!container) return;
+
+		container.classList.toggle("dark-map", isDarkMap.value);
+	};
+
+	/**
+	 * Create OSM tile layer.
+	 */
+	const createTileLayer = (leafletMap: L.Map) => {
+		tileLayer = L.tileLayer(TILE_URL, TILE_OPTIONS).addTo(leafletMap);
+
+		applyTileTheme();
+
+		return tileLayer;
+	};
+
+	/**
+	 * Create Leaflet map.
+	 */
 	const createMap = (el: HTMLElement) => {
-		// Already initialized
 		if (map.value) return;
 
-		// HMR safety: clean up leftover Leaflet instance
+		// Inject CSS sebelum membuat tile layer
+		injectMapStyles();
+
+		/**
+		 * HMR safety.
+		 */
 		if ((el as any)._leaflet_id) {
 			try {
 				const oldMap = (el as any)._leaflet;
-				if (oldMap && typeof oldMap.remove === "function") oldMap.remove();
+
+				if (oldMap && typeof oldMap.remove === "function") {
+					oldMap.remove();
+				}
 			} catch {
-				// Ignore cleanup error on HMR
+				// Ignore HMR cleanup error
 			}
+
 			delete (el as any)._leaflet_id;
-			// Clear child nodes left by old map
 			el.replaceChildren();
 		}
 
-		isDarkMap.value = document.documentElement.classList.contains("dark");
+		/**
+		 * Initial dark mode.
+		 */
+		isDarkMap.value = detectDarkMode();
 
 		const leafletMap = L.map(el, {
 			center: options?.center ?? [-2.5, 118],
@@ -51,35 +139,47 @@ export function useLeafletMap(options?: {
 			scrollWheelZoom: options?.scrollWheelZoom ?? false,
 		});
 
-		tileLayer = L.tileLayer(
-			isDarkMap.value ? TILE_URLS.dark : TILE_URLS.light,
-			{
-				attribution: '&copy; <a href="https://carto.com">CARTO</a>',
-				subdomains: "abcd",
-				maxZoom: 20,
-			},
-		).addTo(leafletMap);
+		/**
+		 * Add OSM tiles.
+		 */
+		createTileLayer(leafletMap);
 
-		L.control.zoom({ position: "bottomright" }).addTo(leafletMap);
+		/**
+		 * Zoom control.
+		 */
+		L.control
+			.zoom({
+				position: "bottomright",
+			})
+			.addTo(leafletMap);
 
+		/**
+		 * Track zoom.
+		 */
 		leafletMap.on("zoomend", () => {
 			currentZoom.value = leafletMap.getZoom();
 		});
 
 		map.value = leafletMap;
 
+		/**
+		 * Map ready.
+		 */
 		leafletMap.whenReady(() => {
 			leafletMap.invalidateSize();
+
 			isReady.value = true;
 			isMapLoading.value = false;
 		});
 
-		// Aggressive invalidateSize to handle CSS loading delays on hard refresh
+		/**
+		 * Fix map size after CSS/layout loads.
+		 */
 		[50, 150, 400, 800, 1500, 3000].forEach((ms) => {
-			const t = setTimeout(() => {
+			const timer = setTimeout(() => {
 				try {
 					leafletMap.invalidateSize();
-					// If map still not ready after 3s, force it
+
 					if (ms >= 1500 && !isReady.value) {
 						isReady.value = true;
 						isMapLoading.value = false;
@@ -88,69 +188,102 @@ export function useLeafletMap(options?: {
 					// Ignore invalidation error
 				}
 			}, ms);
-			invalidateTimers.push(t);
+
+			invalidateTimers.push(timer);
 		});
 
-		resizeObserver = new ResizeObserver(() => {
-			try {
-				leafletMap.invalidateSize();
-			} catch {
-				// Ignore resize error
-			}
-		});
-		resizeObserver.observe(el);
+		/**
+		 * Watch container resize.
+		 */
+		if (typeof ResizeObserver !== "undefined") {
+			resizeObserver = new ResizeObserver(() => {
+				try {
+					leafletMap.invalidateSize();
+				} catch {
+					// Ignore resize error
+				}
+			});
+
+			resizeObserver.observe(el);
+		}
 	};
 
-	// Watch the template ref — fires when DOM element becomes available
-	// This works for BOTH Inertia navigation AND hard refresh
+	/**
+	 * Initialize map when template ref is available.
+	 */
 	watch(
 		mapContainer,
 		(el) => {
-			if (el && !map.value) {
-				// Small delay to ensure parent layout CSS is applied
-				nextTick(() => {
-					requestAnimationFrame(() => {
-						createMap(el);
-					});
+			if (!el || map.value) return;
+
+			nextTick(() => {
+				requestAnimationFrame(() => {
+					createMap(el);
 				});
-				// Fallback: if rAF didn't fire (e.g., tab not visible)
-				setTimeout(() => {
-					if (el && !map.value) createMap(el);
-				}, 200);
-			}
+			});
+
+			// Fallback
+			setTimeout(() => {
+				if (el && !map.value) {
+					createMap(el);
+				}
+			}, 200);
 		},
-		{ immediate: true },
+		{
+			immediate: true,
+		},
 	);
 
+	/**
+	 * Toggle dark/light map.
+	 */
 	const toggleDarkMode = () => {
-		const m = map.value;
-		if (!m || !tileLayer) return;
+		if (!map.value || !tileLayer) return;
+
 		isDarkMap.value = !isDarkMap.value;
-		m.removeLayer(tileLayer);
-		tileLayer = L.tileLayer(
-			isDarkMap.value ? TILE_URLS.dark : TILE_URLS.light,
-			{
-				attribution: '&copy; <a href="https://carto.com">CARTO</a>',
-				subdomains: "abcd",
-				maxZoom: 20,
-			},
-		).addTo(m);
+
+		applyTileTheme();
 	};
 
+	/**
+	 * Sync dengan Tailwind:
+	 *
+	 * <html class="dark">
+	 */
+	const syncDarkMode = () => {
+		if (!map.value || !tileLayer) return;
+
+		const dark = detectDarkMode();
+
+		if (isDarkMap.value === dark) return;
+
+		isDarkMap.value = dark;
+
+		applyTileTheme();
+	};
+
+	/**
+	 * Destroy map.
+	 */
 	const destroy = () => {
 		invalidateTimers.forEach(clearTimeout);
 		invalidateTimers.length = 0;
+
 		resizeObserver?.disconnect();
 		resizeObserver = null;
+
 		if (map.value) {
 			try {
 				map.value.remove();
 			} catch {
 				// Ignore map removal error
 			}
+
 			map.value = null;
 		}
+
 		tileLayer = null;
+
 		isReady.value = false;
 		isMapLoading.value = true;
 	};
@@ -165,5 +298,6 @@ export function useLeafletMap(options?: {
 		isDarkMap,
 		currentZoom,
 		toggleDarkMode,
+		syncDarkMode,
 	};
 }

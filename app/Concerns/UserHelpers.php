@@ -54,7 +54,7 @@ trait UserHelpers
      */
     public function hasFastUserRole(): bool
     {
-        return $this->isMahasiswa() || $this->isDosen();
+        return in_array($this->getResolvedRoleSlug(), ['mahasiswa', 'dosen'], true);
     }
 
     public function hasGlobalRole(string ...$roles): bool
