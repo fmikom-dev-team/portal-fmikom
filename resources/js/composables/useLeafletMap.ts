@@ -4,8 +4,8 @@ import "leaflet/dist/leaflet.css";
 
 const apiKey = import.meta.env.VITE_API_MAP || "";
 const TILE_URLS = {
-	light: `https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=${apiKey}`,
-	dark: `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=${apiKey}`,
+	light: `https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=cb1_3pxh_1_ddba2aa850d8b929d503e4bb`,
+	dark: `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=cb1_3pxh_1_ddba2aa850d8b929d503e4bb`,
 };
 
 export function useLeafletMap(options?: {
