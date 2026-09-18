@@ -2,10 +2,12 @@ import L from "leaflet";
 import { nextTick, onUnmounted, ref, shallowRef, watch } from "vue";
 import "leaflet/dist/leaflet.css";
 
+const apiKey = import.meta.env.VITE_API_MAP || "";
 const TILE_URLS = {
-	light: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-	dark: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+	light: `https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=${apiKey}`,
+	dark: `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=${apiKey}`,
 };
+
 
 export function useLeafletMap(options?: {
 	center?: [number, number];
