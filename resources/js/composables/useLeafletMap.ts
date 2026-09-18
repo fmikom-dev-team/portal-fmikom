@@ -8,7 +8,6 @@ const TILE_URLS = {
 	dark: `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=${apiKey}`,
 };
 
-
 export function useLeafletMap(options?: {
 	center?: [number, number];
 	zoom?: number;
