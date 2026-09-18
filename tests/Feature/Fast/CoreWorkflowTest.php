@@ -279,3 +279,35 @@ it('does not allow a revoked approval assignment to use the old session role', f
         ->assertRedirect(route('dashboard'))
         ->assertSessionHas('error');
 });
+
+it('lets a super-admin use the assigned mahasiswa FAST context', function () {
+    $superAdmin = fastWorkflowUser('super-admin');
+    $module = Module::query()->where('code', 'FAST')->firstOrFail();
+    $mahasiswaRole = Role::firstOrCreate(
+        ['slug' => 'mahasiswa'],
+        ['nama' => 'Mahasiswa', 'deskripsi' => 'FAST test role'],
+    );
+
+    UserModuleRole::firstOrCreate([
+        'user_id' => $superAdmin->id,
+        'module_id' => $module->id,
+        'role_id' => $mahasiswaRole->id,
+    ], ['is_active' => true]);
+
+    $this->actingAs($superAdmin)->withSession([
+        'active_module' => 'FAST',
+        'active_role' => 'mahasiswa',
+    ])->get('/mahasiswa/dashboard')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->component('Modules/Fast/Mahasiswa/Dashboard'));
+});
+
+it('does not allow mahasiswa context to open dosen FAST routes', function () {
+    $mahasiswa = fastWorkflowUser('mahasiswa');
+
+    $this->actingAs($mahasiswa)->withSession([
+        'active_module' => 'FAST',
+        'active_role' => 'mahasiswa',
+    ])->get('/dosen/dashboard')
+        ->assertForbidden();
+});

@@ -102,14 +102,18 @@ class FastPermissionCatalog
      */
     public static function permissionsForUser(User $user, ?string $roleSlug = null): array
     {
+        // Global super-admin tetap memiliki permission penuh, tetapi policy masih
+        // membatasi cakupan data sesuai role konteks yang sedang dipilih.
+        // Contoh: super-admin yang memilih konteks mahasiswa dapat membuka
+        // dashboard mahasiswa tanpa otomatis membaca pengajuan mahasiswa lain.
+        if ($user->isSuperAdmin()) {
+            return ['*'];
+        }
+
         $roleSlug = static::normalizeRoleSlug($roleSlug ?: $user->getResolvedRoleSlug() ?: $user->getGlobalRoleSlug());
 
         if ($roleSlug === '') {
             return [];
-        }
-
-        if ($roleSlug === 'super-admin') {
-            return ['*'];
         }
 
         $dbPermissions = Role::query()
@@ -125,6 +129,20 @@ class FastPermissionCatalog
             ?->all() ?? [];
 
         if ($dbPermissions !== []) {
+            // Data role lama masih memakai permission dengan format `fast:*`.
+            // Selama belum ada permission FAST kanonis (`fast.*`) yang dikonfigurasi,
+            // pertahankan akses baseline agar mahasiswa/dosen tidak terkunci dari
+            // dashboard setelah policy FAST berbasis permission diaktifkan.
+            $hasCanonicalFastPermission = collect($dbPermissions)
+                ->contains(fn (string $permission): bool => str_starts_with($permission, 'fast.'));
+
+            if (! $hasCanonicalFastPermission && isset(self::DEFAULT_ROLE_PERMISSIONS[$roleSlug])) {
+                $dbPermissions = array_merge(
+                    self::DEFAULT_ROLE_PERMISSIONS[$roleSlug],
+                    $dbPermissions,
+                );
+            }
+
             $dbPermissions = array_values(array_unique(array_merge(
                 $dbPermissions,
                 self::readonlyAdminPermissionsForRole($roleSlug),
