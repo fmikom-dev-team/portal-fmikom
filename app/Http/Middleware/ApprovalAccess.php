@@ -17,7 +17,7 @@ class ApprovalAccess
      * Keeps the access flow compatible with the portal module selector,
      * while still allowing direct access when the assignment exists.
      */
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next, ?string $expectedRole = null): Response
     {
         $user = Auth::user();
 
@@ -25,7 +25,10 @@ class ApprovalAccess
             return redirect('/login');
         }
 
-        $resolvedRole = $this->resolveAllowedRole($user, ['kaprodi', 'dekan']);
+        $allowedRoles = ['kaprodi', 'dekan'];
+        $expectedRole = $this->normalizeExpectedRole($expectedRole, $allowedRoles);
+
+        $resolvedRole = $this->resolveAllowedRole($user, $allowedRoles, $expectedRole);
 
         if (! $resolvedRole) {
             return redirect()->route('dashboard')
@@ -42,12 +45,16 @@ class ApprovalAccess
     /**
      * @param  array<int, string>  $allowedRoles
      */
-    protected function resolveAllowedRole($user, array $allowedRoles): ?string
+    protected function resolveAllowedRole($user, array $allowedRoles, ?string $expectedRole = null): ?string
     {
         $sessionModule = strtoupper((string) session('active_module', ''));
         $sessionRole = strtolower((string) session('active_role', ''));
 
         if ($sessionModule === 'FAST' && in_array($sessionRole, $allowedRoles, true)) {
+            if ($expectedRole !== null && $sessionRole !== $expectedRole) {
+                return null;
+            }
+
             $cacheKey = "module_access_{$user->id}_{$sessionModule}_{$sessionRole}";
             $isValid = Cache::remember($cacheKey, now()->addMinutes(5), function () use ($user, $sessionModule, $sessionRole): bool {
                 return UserModuleRole::query()
@@ -68,19 +75,37 @@ class ApprovalAccess
             session()->forget(['active_module', 'active_role', 'active_module_at']);
         }
 
-        $assignedRole = UserModuleRole::query()
+        $assignedRoles = UserModuleRole::query()
             ->where('user_id', $user->id)
             ->where('is_active', true)
             ->whereHas('module', fn ($query) => $query->where('code', 'FAST')->where('is_active', true))
-            ->whereHas('role', fn ($query) => $query->whereIn('slug', $allowedRoles))
+            ->whereHas('role', fn ($query) => $expectedRole !== null
+                ? $query->where('slug', $expectedRole)
+                : $query->whereIn('slug', $allowedRoles))
             ->with('role')
-            ->first();
+            ->get();
 
-        if ($assignedRole?->role?->slug) {
-            return $assignedRole->role->slug;
+        if ($assignedRoles->count() === 1) {
+            return $assignedRoles->first()?->role?->slug;
         }
 
         return null;
+    }
+
+    /**
+     * @param  array<int, string>  $allowedRoles
+     */
+    protected function normalizeExpectedRole(?string $expectedRole, array $allowedRoles): ?string
+    {
+        $expectedRole = strtolower(trim((string) $expectedRole));
+
+        if ($expectedRole === '') {
+            return null;
+        }
+
+        abort_unless(in_array($expectedRole, $allowedRoles, true), 404);
+
+        return $expectedRole;
     }
 
     protected function persistContext(string $role): void

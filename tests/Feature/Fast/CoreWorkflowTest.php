@@ -311,3 +311,67 @@ it('does not allow mahasiswa context to open dosen FAST routes', function () {
     ])->get('/dosen/dashboard')
         ->assertForbidden();
 });
+
+it('keeps a multi-role approver in the selected FAST approval context', function () {
+    fakeFastDocumentGenerator();
+
+    $approver = fastWorkflowUser('kaprodi');
+    $module = Module::query()->where('code', 'FAST')->firstOrFail();
+    $dekanRole = Role::firstOrCreate(
+        ['slug' => 'dekan'],
+        ['nama' => 'Dekan', 'deskripsi' => 'FAST test role'],
+    );
+    UserModuleRole::create([
+        'user_id' => $approver->id,
+        'module_id' => $module->id,
+        'role_id' => $dekanRole->id,
+        'is_active' => true,
+    ]);
+
+    $jenisSurat = fastWorkflowJenisSurat('fast-multi-role-dekan-test', 'dekan');
+    $surat = Surat::create([
+        'jenis_surat_id' => $jenisSurat->id,
+        'pemohon_id' => fastWorkflowUser('mahasiswa')->id,
+        'keperluan' => 'Surat khusus persetujuan Dekan.',
+        'status' => Surat::STATUS_VALIDATED_ADMIN,
+        'tanggal_pengajuan' => now(),
+        'isi_surat' => json_encode(['data' => []], JSON_THROW_ON_ERROR),
+    ]);
+
+    $this->actingAs($approver)->withSession([
+        'active_module' => 'FAST',
+        'active_role' => 'dekan',
+    ])->postJson(route('api.fast.surat.approval', $surat), [
+        'decision' => 'approved',
+    ])->assertOk();
+
+    expect($surat->fresh()->approvalFlows()
+        ->where('role', 'dekan')
+        ->where('status', 'approved')
+        ->exists())->toBeTrue();
+});
+
+it('does not guess an approver role when a multi-role user opens a generic approval URL', function () {
+    $approver = fastWorkflowUser('kaprodi');
+    $module = Module::query()->where('code', 'FAST')->firstOrFail();
+    $dekanRole = Role::firstOrCreate(
+        ['slug' => 'dekan'],
+        ['nama' => 'Dekan', 'deskripsi' => 'FAST test role'],
+    );
+    UserModuleRole::create([
+        'user_id' => $approver->id,
+        'module_id' => $module->id,
+        'role_id' => $dekanRole->id,
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($approver)
+        ->get('/approval/dashboard')
+        ->assertRedirect(route('dashboard'))
+        ->assertSessionHas('error');
+
+    $this->actingAs($approver)
+        ->get('/dekan/dashboard')
+        ->assertOk()
+        ->assertSessionHas('active_role', 'dekan');
+});

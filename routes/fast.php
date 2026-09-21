@@ -285,12 +285,12 @@ Route::middleware(['auth', 'verified', 'admin.access'])
     ->name('admin.')
     ->group($adminRoutes);
 
-Route::middleware(['auth', 'verified', 'admin.access'])
+Route::middleware(['auth', 'verified', 'admin.access:kaprodi'])
     ->prefix('kaprodi/admin')
     ->name('kaprodi.admin.')
     ->group($adminRoutes);
 
-Route::middleware(['auth', 'verified', 'admin.access'])
+Route::middleware(['auth', 'verified', 'admin.access:dekan'])
     ->prefix('dekan/admin')
     ->name('dekan.admin.')
     ->group($adminRoutes);
@@ -336,14 +336,14 @@ Route::middleware(['auth', 'verified', 'approval.access'])
         $approvalRoutes(ApprovalDashboardController::class);
     });
 
-Route::middleware(['auth', 'verified', 'approval.access'])
+Route::middleware(['auth', 'verified', 'approval.access:kaprodi'])
     ->prefix('kaprodi')
     ->name('kaprodi.')
     ->group(function () use ($approvalRoutes) {
         $approvalRoutes(KaprodiApprovalController::class);
     });
 
-Route::middleware(['auth', 'verified', 'approval.access'])
+Route::middleware(['auth', 'verified', 'approval.access:dekan'])
     ->prefix('dekan')
     ->name('dekan.')
     ->group(function () use ($approvalRoutes) {
