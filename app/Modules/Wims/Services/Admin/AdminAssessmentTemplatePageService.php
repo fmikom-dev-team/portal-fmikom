@@ -5,11 +5,14 @@ namespace App\Modules\Wims\Services\Admin;
 use App\Models\Magang\AssessmentTemplate;
 use App\Models\Magang\PendaftaranMagang;
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
 class AdminAssessmentTemplatePageService
 {
+    private const ACADEMIC_YEAR_START_MONTH = 7;
+
     private const DEFAULT_COMPONENTS = [
         ['name' => 'Disiplin', 'weight_percentage' => 15],
         ['name' => 'Komunikasi', 'weight_percentage' => 10],
@@ -106,8 +109,8 @@ class AdminAssessmentTemplatePageService
             ->map(fn (AssessmentTemplate $template) => $template->periode_mulai?->format('Y'))
             ->toBase();
 
-        $currentYear = (int) now()->format('Y');
-        $fallbackYears = collect(range($currentYear - 1, $currentYear + 5))->map(fn (int $year) => (string) $year);
+        $currentAcademicYear = $this->academicYearStart(now());
+        $fallbackYears = collect(range($currentAcademicYear - 1, $currentAcademicYear + 5))->map(fn (int $year) => (string) $year);
 
         return $registrationYears
             ->merge($templateYears)
@@ -117,17 +120,25 @@ class AdminAssessmentTemplatePageService
             ->sortDesc()
             ->values()
             ->map(function (string $year) {
-                $startDate = Carbon::createFromDate((int) $year, 1, 1)->toDateString();
-                $endDate = Carbon::createFromDate((int) $year, 12, 31)->toDateString();
+                $startYear = (int) $year;
+                $startDate = Carbon::createFromDate($startYear, self::ACADEMIC_YEAR_START_MONTH, 1)->toDateString();
+                $endDate = Carbon::createFromDate($startYear + 1, self::ACADEMIC_YEAR_START_MONTH, 1)
+                    ->subDay()
+                    ->toDateString();
 
                 return [
                     'value' => $year,
-                    'label' => $year,
+                    'label' => sprintf('%d/%d', $startYear, $startYear + 1),
                     'periode_mulai' => $startDate,
                     'periode_selesai' => $endDate,
                     'periode_label' => $this->formatDateRange($startDate, $endDate),
                 ];
             });
+    }
+
+    private function academicYearStart(CarbonInterface $date): int
+    {
+        return (int) $date->format('Y') - ($date->month < self::ACADEMIC_YEAR_START_MONTH ? 1 : 0);
     }
 
     private function transformTemplate(AssessmentTemplate $template): array

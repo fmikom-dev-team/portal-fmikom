@@ -110,6 +110,8 @@ const form = useForm({
     name: '',
     description: '',
     year: '',
+    periode_mulai: '',
+    periode_selesai: '',
     assessor_role: 'dosen' as 'dosen' | 'mitra' | 'both',
     is_active: true,
     components: buildDefaultComponents(),
@@ -198,8 +200,14 @@ const useSharedTemplate = computed({
     },
 });
 
+const resolveAcademicYearLabel = (year: string) => {
+    const startYear = Number(year);
+
+    return Number.isFinite(startYear) ? `${startYear}/${startYear + 1}` : year;
+};
+
 const buildTemplateName = (year: string, role: 'dosen' | 'mitra' | 'both') =>
-    `Template Penilaian ${resolveRoleLabel(role)} ${year}`;
+    `Template Penilaian ${resolveRoleLabel(role)} ${resolveAcademicYearLabel(year)}`;
 
 const setSortOrder = () => {
     form.components = form.components.map((component, index) => ({
@@ -215,6 +223,8 @@ const fillForm = (template: TemplateItem | null) => {
         form.name = '';
         form.description = '';
         form.year = props.years[0]?.value ?? '';
+        form.periode_mulai = props.years[0]?.periode_mulai ?? '';
+        form.periode_selesai = props.years[0]?.periode_selesai ?? '';
         form.assessor_role = workspaceRole.value;
         form.is_active = true;
         form.components = buildDefaultComponents();
@@ -229,6 +239,8 @@ const fillForm = (template: TemplateItem | null) => {
     form.name = template.name;
     form.description = template.description ?? '';
     form.year = template.year ?? '';
+    form.periode_mulai = template.periode_mulai;
+    form.periode_selesai = template.periode_selesai;
     form.assessor_role = template.assessor_role;
     form.is_active = template.is_active;
     form.components = template.components.map((component, index) => ({
@@ -287,6 +299,11 @@ watch(selectedYearOption, (yearOption) => {
     }
 
     form.year = yearOption.value;
+
+    if (!selectedTemplateId.value) {
+        form.periode_mulai = yearOption.periode_mulai;
+        form.periode_selesai = yearOption.periode_selesai;
+    }
 
     const nextAutoName = buildTemplateName(yearOption.value, form.assessor_role);
 
@@ -398,6 +415,8 @@ const submit = () => {
         name: form.name,
         description: form.description,
         year: Number(form.year),
+        periode_mulai: form.periode_mulai,
+        periode_selesai: form.periode_selesai,
         assessor_role: form.assessor_role,
         is_active: form.is_active,
         components: form.components.map((component, index) => ({
@@ -619,7 +638,7 @@ const submitLabel = computed(() =>
                                             variant="outline"
                                             class="rounded-full border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[10px] font-bold text-slate-700 shadow-none"
                                         >
-                                            Tahun {{ template.year || '-' }}
+                                            Tahun ajaran {{ template.year ? resolveAcademicYearLabel(template.year) : '-' }}
                                         </Badge>
                                         <p class="truncate text-sm font-bold text-zinc-950">
                                             {{ template.name }}
@@ -655,9 +674,9 @@ const submitLabel = computed(() =>
 
                             <div class="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                                 <div class="rounded-lg border border-zinc-200 bg-white px-3 py-2.5">
-                                    <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Tahun</p>
+                                    <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Tahun ajaran</p>
                                     <p class="mt-1 text-sm font-bold text-zinc-950">
-                                        {{ template.year || '-' }}
+                                        {{ template.year ? resolveAcademicYearLabel(template.year) : '-' }}
                                     </p>
                                 </div>
                                 <div class="rounded-lg border border-zinc-200 bg-white px-3 py-2.5">
@@ -690,7 +709,7 @@ const submitLabel = computed(() =>
                             Belum ada template penilaian.
                         </p>
                         <p class="mt-2 text-sm text-zinc-500">
-                            Mulai dari template default lalu sesuaikan untuk tahun PKL yang dibutuhkan.
+                            Mulai dari template default lalu sesuaikan untuk tahun ajaran PKL yang dibutuhkan.
                         </p>
                     </div>
                 </CardContent>
@@ -735,12 +754,12 @@ const submitLabel = computed(() =>
                 <CardContent class="space-y-5 px-5 py-5">
                     <div class="grid gap-4 md:grid-cols-2">
                         <div class="space-y-2">
-                            <label class="text-sm font-bold text-zinc-900">Tahun Penilaian</label>
+                            <label class="text-sm font-bold text-zinc-900">Tahun Ajaran</label>
                             <select
                                 v-model="selectedYear"
                                 class="h-10 w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10"
                             >
-                                <option value="">Pilih tahun PKL</option>
+                                <option value="">Pilih tahun ajaran PKL</option>
                                 <option
                                     v-for="yearOption in years"
                                     :key="yearOption.value"
@@ -784,7 +803,7 @@ const submitLabel = computed(() =>
                                     type="checkbox"
                                     class="size-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-600/20"
                                 />
-                                Template aktif tahun ini
+                                Template aktif pada tahun ajaran ini
                             </label>
                         </div>
                     </div>
@@ -796,7 +815,7 @@ const submitLabel = computed(() =>
                         <Input
                             v-model="form.name"
                             type="text"
-                            placeholder="Template Penilaian PKL 2026"
+                            placeholder="Template Penilaian PKL 2026/2027"
                             class="h-10 rounded-lg border-zinc-200 bg-zinc-50"
                         />
                         <InputError :message="form.errors.name" />
@@ -834,7 +853,7 @@ const submitLabel = computed(() =>
                                     Komponen Penilaian
                                 </p>
                                 <p class="mt-1 text-sm text-zinc-500">
-                                    Gunakan komponen yang sama untuk semua mahasiswa PKL tahun {{ selectedYear || 'ini' }}.
+                                    Gunakan komponen yang sama untuk semua mahasiswa PKL tahun ajaran {{ selectedYear ? resolveAcademicYearLabel(selectedYear) : 'ini' }}.
                                 </p>
                             </div>
 
