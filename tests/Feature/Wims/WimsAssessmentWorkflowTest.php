@@ -164,6 +164,32 @@ it('resolver prefers exact template and falls back to shared template by role an
         ->and($resolver->resolveForRoleAndDate('mitra', now()->setDate(2026, 6, 14))?->is($sharedTemplate))->toBeTrue();
 });
 
+it('uses the academic year of the PKL start date for cross-year internships', function () {
+    $service = app(AdminAssessmentTemplateActionService::class);
+    $creator = User::factory()->create();
+    $template = $service->create(makeAssessmentTemplatePayload([
+        'year' => 2026,
+        'periode_mulai' => null,
+        'periode_selesai' => null,
+    ]), $creator->id);
+
+    expect($template->periode_mulai?->toDateString())->toBe('2026-07-01')
+        ->and($template->periode_selesai?->toDateString())->toBe('2027-06-30');
+
+    [, $student, $company] = makeAssessmentRegistration();
+    $registration = PendaftaranMagang::create([
+        'mahasiswa_id' => $student->id,
+        'perusahaan_id' => $company->id,
+        'tanggal_mulai' => '2026-11-10',
+        'tanggal_selesai' => '2027-01-10',
+        'status' => 'selesai',
+    ]);
+
+    $resolver = app(AssessmentTemplateResolverService::class);
+
+    expect($resolver->resolveForRegistration($registration, 'dosen')?->is($template))->toBeTrue();
+});
+
 it('saves draft submissions partially and computes weighted score on backend', function () {
     [$assessor, , , $registration] = makeAssessmentRegistration();
     $template = AssessmentTemplate::create([
