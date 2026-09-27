@@ -10,6 +10,8 @@ use Illuminate\Validation\ValidationException;
 
 class AdminAssessmentTemplateActionService
 {
+    private const ACADEMIC_YEAR_START_MONTH = 7;
+
     public function create(array $validated, ?int $userId): AssessmentTemplate
     {
         return DB::transaction(function () use ($validated, $userId): AssessmentTemplate {
@@ -61,10 +63,10 @@ class AdminAssessmentTemplateActionService
         $year = isset($validated['year']) ? (int) $validated['year'] : null;
         $periodeMulai = filled($validated['periode_mulai'] ?? null)
             ? Carbon::parse($validated['periode_mulai'])->startOfDay()->toDateString()
-            : Carbon::create($year, 1, 1)->startOfDay()->toDateString();
+            : Carbon::create($year, self::ACADEMIC_YEAR_START_MONTH, 1)->startOfDay()->toDateString();
         $periodeSelesai = filled($validated['periode_selesai'] ?? null)
             ? Carbon::parse($validated['periode_selesai'])->startOfDay()->toDateString()
-            : Carbon::create($year, 12, 31)->startOfDay()->toDateString();
+            : Carbon::create($year + 1, self::ACADEMIC_YEAR_START_MONTH, 1)->subDay()->startOfDay()->toDateString();
         $resolvedYear = (int) Carbon::parse($periodeMulai)->format('Y');
         $assessorRole = (string) $validated['assessor_role'];
         $roleLabel = $this->assessorRoleLabel($assessorRole);
