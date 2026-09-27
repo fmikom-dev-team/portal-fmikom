@@ -98,19 +98,14 @@ class SuratKomponenRenderer
      */
     public static function mpdfFontConfig(): array
     {
+        $fontDirs = static::mpdfFontDirectories();
+        $timesFontDefinition = static::timesNewRomanFontDefinition($fontDirs);
+
         if (! class_exists(ConfigVariables::class) || ! class_exists(FontVariables::class)) {
             return [
-                'fontDir' => array_values(array_filter([
-                    storage_path('fonts'),
-                    is_dir('C:\\Windows\\Fonts') ? 'C:\\Windows\\Fonts' : null,
-                ])),
+                'fontDir' => $fontDirs,
                 'fontdata' => [
-                    'timesnewroman' => [
-                        'R' => 'times.ttf',
-                        'B' => 'timesbd.ttf',
-                        'I' => 'timesi.ttf',
-                        'BI' => 'timesbi.ttf',
-                    ],
+                    'timesnewroman' => $timesFontDefinition,
                 ],
             ];
         }
@@ -120,22 +115,100 @@ class SuratKomponenRenderer
 
         $fontDirs = array_values(array_unique(array_filter(array_merge(
             $configDefaults['fontDir'] ?? [],
-            [storage_path('fonts')],
-            is_dir('C:\\Windows\\Fonts') ? ['C:\\Windows\\Fonts'] : [],
+            $fontDirs,
         ))));
 
         $fontdata = $fontDefaults['fontdata'] ?? [];
-        $fontdata['timesnewroman'] = [
-            'R' => 'times.ttf',
-            'B' => 'timesbd.ttf',
-            'I' => 'timesi.ttf',
-            'BI' => 'timesbi.ttf',
-        ];
+        $fontdata['timesnewroman'] = static::timesNewRomanFontDefinition($fontDirs);
 
         return [
             'fontDir' => $fontDirs,
             'fontdata' => $fontdata,
         ];
+    }
+
+    /**
+     * Resolve font folders without assuming a Windows-only installation.
+     *
+     * FAST keeps Times New Roman when its four font files are actually
+     * installed. Linux deployments may instead configure a font folder with
+     * FAST_PDF_FONT_DIRECTORIES. mPDF's bundled FreeSerif remains the safe
+     * serif fallback when Times New Roman is not present.
+     *
+     * @return array<int, string>
+     */
+    protected static function mpdfFontDirectories(): array
+    {
+        $configuredDirectories = array_filter(
+            explode(PATH_SEPARATOR, (string) config('fast.pdf_font_directories', '')),
+            static fn (string $directory): bool => $directory !== '' && is_dir($directory),
+        );
+
+        $systemDirectories = [
+            'C:\\Windows\\Fonts',
+            '/usr/share/fonts',
+            '/usr/local/share/fonts',
+            '/usr/share/fonts/truetype/msttcorefonts',
+        ];
+
+        return array_values(array_unique(array_filter([
+            storage_path('fonts'),
+            ...$configuredDirectories,
+            ...$systemDirectories,
+        ], static fn (string $directory): bool => is_dir($directory))));
+    }
+
+    /**
+     * @param  array<int, string>  $fontDirs
+     * @return array{R: string, B: string, I: string, BI: string}
+     */
+    protected static function timesNewRomanFontDefinition(array $fontDirs): array
+    {
+        $timesFiles = config('fast.pdf_times_new_roman', [
+            'R' => 'times.ttf',
+            'B' => 'timesbd.ttf',
+            'I' => 'timesi.ttf',
+            'BI' => 'timesbi.ttf',
+        ]);
+
+        $definition = [
+            'R' => (string) ($timesFiles['R'] ?? 'times.ttf'),
+            'B' => (string) ($timesFiles['B'] ?? 'timesbd.ttf'),
+            'I' => (string) ($timesFiles['I'] ?? 'timesi.ttf'),
+            'BI' => (string) ($timesFiles['BI'] ?? 'timesbi.ttf'),
+        ];
+
+        if (static::fontFilesExist($fontDirs, $definition)) {
+            return $definition;
+        }
+
+        // FreeSerif is bundled with mPDF. This is only used on servers where
+        // Times New Roman is unavailable, preventing PDF generation from
+        // failing while retaining a conventional serif letter appearance.
+        return [
+            'R' => 'FreeSerif.ttf',
+            'B' => 'FreeSerifBold.ttf',
+            'I' => 'FreeSerifItalic.ttf',
+            'BI' => 'FreeSerifBoldItalic.ttf',
+        ];
+    }
+
+    /**
+     * @param  array<int, string>  $fontDirs
+     * @param  array{R: string, B: string, I: string, BI: string}  $files
+     */
+    protected static function fontFilesExist(array $fontDirs, array $files): bool
+    {
+        foreach ($fontDirs as $fontDir) {
+            $allFilesExist = collect($files)
+                ->every(static fn (string $file): bool => is_file($fontDir.DIRECTORY_SEPARATOR.$file));
+
+            if ($allFilesExist) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // Hanya tampilkan: nama_instansi (dari field nama_instansi)

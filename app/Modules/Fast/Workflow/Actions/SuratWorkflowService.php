@@ -346,9 +346,9 @@ class SuratWorkflowService
     /**
      * @param  array<string, mixed>  $payload
      */
-    public function approve(Surat $surat, User $actor, array $payload): Surat
+    public function approve(Surat $surat, User $actor, array $payload, ?string $resolvedRole = null): Surat
     {
-        $role = $this->resolveApprovalRole($actor);
+        $role = $this->resolveApprovalRole($actor, $resolvedRole);
         abort_if($role === null, 403, 'Role pengguna bukan approver yang valid.');
 
         if ($payload['decision'] === 'revision_requested') {
@@ -594,11 +594,13 @@ class SuratWorkflowService
         return $storedValue;
     }
 
-    protected function resolveApprovalRole(User $actor): ?string
+    protected function resolveApprovalRole(User $actor, ?string $resolvedRole = null): ?string
     {
-        return match (true) {
-            $actor->hasRole('kaprodi') => ApprovalWorkflowService::ROLE_KAPRODI,
-            $actor->hasRole('dekan') => ApprovalWorkflowService::ROLE_DEKAN,
+        $role = strtolower(trim((string) ($resolvedRole ?? $actor->getResolvedRoleSlug())));
+
+        return match ($role) {
+            ApprovalWorkflowService::ROLE_KAPRODI => ApprovalWorkflowService::ROLE_KAPRODI,
+            ApprovalWorkflowService::ROLE_DEKAN => ApprovalWorkflowService::ROLE_DEKAN,
             default => null,
         };
     }

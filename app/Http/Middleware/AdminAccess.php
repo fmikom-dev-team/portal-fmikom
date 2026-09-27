@@ -19,7 +19,7 @@ class AdminAccess
      * - active FAST context from portal selection, or
      * - a direct global admin/super-admin identity.
      */
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next, ?string $expectedRole = null): Response
     {
         /** @var User|null $user */
         $user = Auth::user();
@@ -28,10 +28,9 @@ class AdminAccess
             return redirect('/login');
         }
 
-        $resolvedRole = $this->resolveAllowedRole(
-            $user,
-            ['admin', 'super-admin', 'admin-universitas', 'admin-akademik', 'prodi', 'kaprodi', 'dekan'],
-        );
+        $allowedRoles = ['admin', 'super-admin', 'admin-universitas', 'admin-akademik', 'prodi', 'kaprodi', 'dekan'];
+        $expectedRole = $this->normalizeExpectedRole($expectedRole, $allowedRoles);
+        $resolvedRole = $this->resolveAllowedRole($user, $allowedRoles, $expectedRole);
 
         if (! $resolvedRole) {
             return redirect()->route('dashboard')
@@ -48,27 +47,23 @@ class AdminAccess
     /**
      * @param  array<int, string>  $allowedRoles
      */
-    protected function resolveAllowedRole(User $user, array $allowedRoles): ?string
+    protected function resolveAllowedRole(User $user, array $allowedRoles, ?string $expectedRole = null): ?string
     {
         $sessionModule = strtoupper((string) session('active_module', ''));
         $sessionRole = strtolower((string) session('active_role', ''));
 
         if ($sessionModule === 'FAST' && in_array($sessionRole, $allowedRoles, true)) {
+            if ($expectedRole !== null && $sessionRole !== $expectedRole) {
+                return null;
+            }
+
             $cacheKey = "module_access_{$user->id}_{$sessionModule}_{$sessionRole}";
             $isValid = Cache::remember($cacheKey, now()->addMinutes(5), function () use ($user, $sessionModule, $sessionRole) {
-                $hasAssignment = UserModuleRole::where('user_id', '=', $user->id, 'and')
+                return UserModuleRole::where('user_id', '=', $user->id, 'and')
                     ->where('is_active', '=', true, 'and')
                     ->whereHas('module', fn ($q) => $q->where('code', '=', $sessionModule, 'and')->where('is_active', '=', true, 'and'))
                     ->whereHas('role', fn ($q) => $q->where('slug', '=', $sessionRole, 'and'))
                     ->exists();
-
-                if ($hasAssignment) {
-                    return true;
-                }
-
-                $userType = $user->getGlobalRoleSlug();
-
-                return $sessionRole === $userType;
             });
 
             if ($isValid) {
@@ -77,19 +72,39 @@ class AdminAccess
         }
 
         $globalRole = $user->getGlobalRoleSlug();
-        if ($globalRole && in_array($globalRole, $allowedRoles, true)) {
+        if ($expectedRole === null && $globalRole && in_array($globalRole, ['admin', 'super-admin'], true)) {
             return $globalRole;
         }
 
-        $assignedRole = UserModuleRole::query()
+        $assignedRoles = UserModuleRole::query()
             ->where('user_id', '=', $user->id, 'and')
             ->where('is_active', '=', true, 'and')
             ->whereHas('module', fn ($query) => $query->where('code', '=', 'FAST', 'and')->where('is_active', '=', true, 'and'))
-            ->whereHas('role', fn ($query) => $query->whereIn('slug', $allowedRoles, 'and', false))
+            ->whereHas('role', fn ($query) => $expectedRole !== null
+                ? $query->where('slug', '=', $expectedRole, 'and')
+                : $query->whereIn('slug', $allowedRoles, 'and', false))
             ->with('role')
-            ->first();
+            ->get();
 
-        return $assignedRole?->role?->slug;
+        return $assignedRoles->count() === 1
+            ? $assignedRoles->first()?->role?->slug
+            : null;
+    }
+
+    /**
+     * @param  array<int, string>  $allowedRoles
+     */
+    protected function normalizeExpectedRole(?string $expectedRole, array $allowedRoles): ?string
+    {
+        $expectedRole = strtolower(trim((string) $expectedRole));
+
+        if ($expectedRole === '') {
+            return null;
+        }
+
+        abort_unless(in_array($expectedRole, $allowedRoles, true), 404);
+
+        return $expectedRole;
     }
 
     protected function persistContext(string $role): void

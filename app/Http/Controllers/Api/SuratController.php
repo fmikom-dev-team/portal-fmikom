@@ -25,6 +25,9 @@ class SuratController extends Controller
     {
         $user = $request->user();
         abort_if($user === null, 401);
+        $this->authorize('viewAny', Surat::class);
+
+        $resolvedRole = strtolower((string) $request->attributes->get('resolved_role'));
 
         $query = Surat::query()->with([
             'pemohon',
@@ -33,16 +36,12 @@ class SuratController extends Controller
             'lampirans',
         ]);
 
-        if ($user->hasFastUserRole()) {
+        if (in_array($resolvedRole, ['mahasiswa', 'dosen'], true)) {
             $query->where('pemohon_id', $user->id);
-        } elseif ($user->isApprover()) {
-            $approvalRoleSlug = $user->hasRole('kaprodi') ? 'kaprodi' : 'dekan';
-
+        } elseif (in_array($resolvedRole, ['kaprodi', 'dekan'], true)) {
             $query
                 ->whereIn('status', [Surat::STATUS_VALIDATED_ADMIN])
-                ->whereHas('jenisSurat.approvalRole', fn ($roleQuery) => $roleQuery->where('slug', $approvalRoleSlug));
-        } elseif (! $user->hasStaffAccess()) {
-            abort(403, 'Anda tidak memiliki akses ke data surat.');
+                ->whereHas('jenisSurat.approvalRole', fn ($roleQuery) => $roleQuery->where('slug', $resolvedRole));
         }
 
         if ($request->filled('status')) {
@@ -90,22 +89,7 @@ class SuratController extends Controller
     {
         $user = $request->user();
         abort_if($user === null, 401);
-
-        if ($user->hasFastUserRole()) {
-            abort_unless($surat->pemohon_id === $user->id, 403, 'Anda tidak dapat melihat surat ini.');
-        } elseif ($user->isApprover()) {
-            $surat->loadMissing('jenisSurat.approvalRole');
-
-            abort_unless(
-                $surat->status === Surat::STATUS_VALIDATED_ADMIN
-                && $surat->jenisSurat?->approvalRole !== null
-                && $user->hasRole((string) $surat->jenisSurat->approvalRole->slug),
-                403,
-                'Anda tidak dapat melihat surat ini.',
-            );
-        } elseif (! $user->hasStaffAccess()) {
-            abort(403, 'Anda tidak memiliki akses ke data surat ini.');
-        }
+        $this->authorize('view', $surat);
 
         $surat->loadMissing([
             'pemohon',
@@ -124,6 +108,11 @@ class SuratController extends Controller
 
     public function adminValidate(AdminReviewSuratRequest $request, Surat $surat): JsonResponse
     {
+        $this->authorize(
+            $request->string('decision')->toString() === 'rejected' ? 'reject' : 'approve',
+            $surat,
+        );
+
         $updated = $this->workflow->adminReview($surat, $request->user(), $request->validated());
 
         return response()->json([
@@ -136,7 +125,20 @@ class SuratController extends Controller
 
     public function approve(ApproveSuratRequest $request, Surat $surat): JsonResponse
     {
-        $updated = $this->workflow->approve($surat, $request->user(), $request->validated());
+        $decision = $request->string('decision')->toString();
+        $ability = match ($decision) {
+            'revision_requested' => 'reject',
+            'rejected_final' => 'finalReject',
+            default => 'approve',
+        };
+        $this->authorize($ability, $surat);
+
+        $updated = $this->workflow->approve(
+            $surat,
+            $request->user(),
+            $request->validated(),
+            $request->attributes->get('resolved_role'),
+        );
 
         return response()->json([
             'message' => match ($request->string('decision')->toString()) {
@@ -150,6 +152,8 @@ class SuratController extends Controller
 
     public function generateDocument(GenerateSuratDocumentRequest $request, Surat $surat): JsonResponse
     {
+        $this->authorize('generate', $surat);
+
         $generated = $this->workflow->generateDocument(
             $surat,
             $request->user(),
