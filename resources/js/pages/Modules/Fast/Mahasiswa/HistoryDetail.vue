@@ -889,6 +889,7 @@ async function copyNomor() {
             :mode="viewerType"
             :title="viewerTitle"
             :url="viewerUrl"
+            :download-url="surat.pdfUrl"
             :show-html-zoom-controls="true"
             :show-thumbnails="false"
             :initial-zoom="100"

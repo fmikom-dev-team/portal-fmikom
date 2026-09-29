@@ -71,6 +71,7 @@ const cancelConfirmId = ref<number | null>(null);
 // PDF viewer state
 const viewerOpen = ref(false);
 const viewerUrl = ref<string | null>(null);
+const viewerDownloadUrl = ref<string | null>(null);
 const viewerTitle = ref('');
 const viewerType = ref<'html' | 'pdf'>('html');
 const viewerStatus = ref('');
@@ -78,8 +79,9 @@ const viewerNomor = ref<string | null>(null);
 function openViewer(item: Surat, mode: 'preview' | 'download') {
     if (mode === 'preview') {
         viewerUrl.value = `/documents/surat/${item.id}/generated-document`;
+        viewerDownloadUrl.value = `/documents/surat/${item.id}/pdf`;
         viewerTitle.value = `Preview - ${item.jenisSurat}`;
-        viewerType.value = 'html';
+        viewerType.value = 'pdf';
     } else {
         const url = `/documents/surat/${item.id}/pdf`;
         const link = document.createElement('a');
@@ -99,6 +101,7 @@ function closeViewer() {
     viewerOpen.value = false;
     setTimeout(() => {
         viewerUrl.value = null;
+        viewerDownloadUrl.value = null;
     }, 200);
 }
 // End PDF viewer state
@@ -569,6 +572,7 @@ function goToPage(page: number) {
             :mode="viewerType"
             :title="viewerTitle"
             :url="viewerUrl"
+            :download-url="viewerDownloadUrl"
             :show-html-zoom-controls="true"
             :show-thumbnails="false"
             :initial-zoom="100"

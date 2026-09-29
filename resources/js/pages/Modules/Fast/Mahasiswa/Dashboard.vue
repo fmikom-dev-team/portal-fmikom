@@ -484,6 +484,7 @@ function confirmSubmit() {
 // -- Viewer state -------------------------------------------------------------
 const viewerOpen = ref(false);
 const viewerUrl = ref<string | null>(null);
+const viewerDownloadUrl = ref<string | null>(null);
 const viewerTitle = ref('');
 const viewerMode = ref<'html' | 'pdf'>('html');
 const viewerNomor = ref<string | null>(null);
@@ -491,18 +492,16 @@ const iframeZoom = ref(100);
 const iframeLoad = ref(true);
 const iframeError = ref(false);
 
-function openViewer(item: LatestSubmission, mode: 'preview' | 'pdf') {
+function openViewer(item: LatestSubmission) {
     iframeZoom.value = 100;
     iframeLoad.value = true;
     iframeError.value = false;
 
-    if (mode === 'pdf' && item.hasPdf) {
-        viewerUrl.value = `/documents/surat/${item.id}/pdf`;
-        viewerMode.value = 'pdf';
-    } else {
-        viewerUrl.value = `/documents/surat/${item.id}/generated-document`;
-        viewerMode.value = 'html';
-    }
+    // Endpoint generated-document mengirim PDF inline. Endpoint /pdf digunakan
+    // khusus untuk unduhan agar iframe tidak menerima respons attachment.
+    viewerUrl.value = `/documents/surat/${item.id}/generated-document`;
+    viewerDownloadUrl.value = `/documents/surat/${item.id}/pdf`;
+    viewerMode.value = 'pdf';
     viewerTitle.value = `${item.jenisSurat} - ${item.reference}`;
     viewerNomor.value = item.reference;
     viewerOpen.value = true;
@@ -523,6 +522,7 @@ function closeViewer() {
     viewerOpen.value = false;
     setTimeout(() => {
         viewerUrl.value = null;
+        viewerDownloadUrl.value = null;
     }, 200);
 }
 
@@ -1720,6 +1720,7 @@ function fieldError(name: string): string | undefined {
             :title="viewerTitle"
             :subtitle="viewerNomor"
             :url="viewerUrl"
+            :download-url="viewerDownloadUrl"
             :show-open-in-new-tab="true"
             :show-thumbnails="false"
             :initial-zoom="100"
