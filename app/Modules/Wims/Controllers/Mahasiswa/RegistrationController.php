@@ -44,27 +44,27 @@ class RegistrationController extends Controller
         $actionRegistration = $requestedRegistration?->status === 'revisi'
             ? $requestedRegistration
             : $this->studentRegistrationPageService->latestRegistration($user->id);
-        $proposalFile = $request->file('proposal_pkl');
         $transcriptFile = $request->file('transkrip_nilai');
+        $paymentProofFile = $request->file('bukti_pembayaran');
         $recommendationFile = $request->file('surat_rekomendasi_kaprodi');
         $removeRecommendation = $request->boolean('surat_rekomendasi_kaprodi_remove');
 
         $missingFiles = [];
         $isRevision = $actionRegistration?->status === 'revisi';
 
-        if (! $proposalFile && (! $isRevision || ! filled($actionRegistration->proposal_pkl_path))) {
-            $missingFiles['proposal_pkl'] = 'Proposal PKL wajib dilampirkan saat pendaftaran.';
-        }
         if (! $transcriptFile && (! $isRevision || ! filled($actionRegistration->transkrip_nilai_path))) {
             $missingFiles['transkrip_nilai'] = 'Transkrip nilai terakhir wajib dilampirkan.';
+        }
+        if (! $paymentProofFile && (! $isRevision || ! filled($actionRegistration->bukti_pembayaran_path))) {
+            $missingFiles['bukti_pembayaran'] = 'Bukti pembayaran PKL/magang wajib dilampirkan.';
         }
         if ($missingFiles) {
             throw ValidationException::withMessages($missingFiles);
         }
 
         foreach (array_filter([
-            'proposal_pkl' => $proposalFile,
             'transkrip_nilai' => $transcriptFile,
+            'bukti_pembayaran' => $paymentProofFile,
             'surat_rekomendasi_kaprodi' => $recommendationFile,
         ]) as $field => $file) {
             $scanner = app(VirusScannerService::class);
@@ -87,6 +87,7 @@ class RegistrationController extends Controller
             'tanggal_selesai' => $request->date('tanggal_selesai')?->toDateString(),
             'perusahaan_diminati_nama' => $request->safe()->string('perusahaan_diminati_nama')->trim()->toString(),
             'perusahaan_diminati_alamat' => $request->safe()->string('perusahaan_diminati_alamat')->trim()->toString(),
+            'metode_penempatan' => $request->safe()->string('metode_penempatan')->toString(),
             'catatan_pengajuan' => $request->safe()->string('catatan_pengajuan')->trim()->toString(),
             'status_kip' => $request->safe()->string('status_kip')->toString(),
             'sks_ditempuh' => $request->integer('sks_ditempuh'),
@@ -97,15 +98,39 @@ class RegistrationController extends Controller
         ]);
 
         if ($isRevision) {
-            $this->studentRegistrationActionService->resubmitRevision($actionRegistration, $payload, $proposalFile, $transcriptFile, $recommendationFile, $removeRecommendation);
+            $this->studentRegistrationActionService->resubmitRevision($actionRegistration, $payload, null, $transcriptFile, $paymentProofFile, $recommendationFile, $removeRecommendation);
 
             return to_route('wims.registration', ['pendaftaran' => $actionRegistration->id])
                 ->with('success', 'Perbaikan pendaftaran berhasil dikirim ulang dan menunggu review kampus.');
         }
 
-        $registration = $this->studentRegistrationActionService->create($user, $payload, $proposalFile, $transcriptFile, $recommendationFile);
+        $registration = $this->studentRegistrationActionService->create($user, $payload, $transcriptFile, $paymentProofFile, $recommendationFile);
 
         return to_route('wims.registration', ['pendaftaran' => $registration->id])
             ->with('success', 'Pendaftaran PKL/magang berhasil dikirim dan menunggu review kampus.');
+    }
+
+    public function uploadProposal(Request $request, int $pendaftaran): RedirectResponse
+    {
+        $validated = $request->validate([
+            'proposal_pkl' => ['required', 'file', 'mimes:pdf,doc,docx', 'max:5120'],
+        ], [
+            'proposal_pkl.required' => 'Pilih proposal PKL terlebih dahulu.',
+            'proposal_pkl.mimes' => 'Proposal PKL harus berformat PDF, DOC, atau DOCX.',
+            'proposal_pkl.max' => 'Ukuran proposal PKL maksimal 5 MB.',
+        ]);
+
+        $registration = $this->studentRegistrationPageService->registrationForStudent($request->user()->id, $pendaftaran);
+        abort_unless($registration, 404);
+
+        $scanResult = app(VirusScannerService::class)->scan($validated['proposal_pkl']);
+        if (! $scanResult['safe']) {
+            throw ValidationException::withMessages(['proposal_pkl' => $scanResult['reason']]);
+        }
+
+        $this->studentRegistrationActionService->replaceProposal($registration, $validated['proposal_pkl']);
+
+        return to_route('wims.registration', ['pendaftaran' => $registration->id, 'step' => 'proposal'])
+            ->with('success', 'Proposal PKL berhasil diunggah.');
     }
 }

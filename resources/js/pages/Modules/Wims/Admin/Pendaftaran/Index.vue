@@ -61,6 +61,7 @@ type Summary = {
 type RegistrationItem = {
     id: number;
     application_note?: string | null;
+    placement_method?: string | null;
     revision_note?: string | null;
     status_kip?: string | null;
     sks_ditempuh?: number | null;
@@ -79,6 +80,12 @@ type RegistrationItem = {
         download_url?: string | null;
     } | null;
     transcript_attachment?: {
+        exists?: boolean | null;
+        name?: string | null;
+        uploaded_at?: string | null;
+        download_url?: string | null;
+    } | null;
+    payment_proof_attachment?: {
         exists?: boolean | null;
         name?: string | null;
         uploaded_at?: string | null;
@@ -874,6 +881,7 @@ const placementLink = (item: RegistrationItem) =>
                         <h3 class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Rencana PKL</h3>
                         <div class="space-y-3">
                             <div class="border-b border-zinc-100 pb-3"><p class="text-slate-500">Periode</p><p class="mt-1 font-semibold text-zinc-900">{{ detailTarget?.tanggal_mulai || '-' }} s/d {{ detailTarget?.tanggal_selesai || '-' }}</p></div>
+                            <div class="border-b border-zinc-100 pb-3"><p class="text-slate-500">Metode penempatan</p><p class="mt-1 font-semibold text-zinc-900">{{ detailTarget?.placement_method === 'mandiri' ? 'Usulan perusahaan sendiri' : detailTarget?.placement_method === 'kampus' ? 'Dipilihkan oleh kampus' : '-' }}</p></div>
                             <div class="border-b border-zinc-100 pb-3"><p class="text-slate-500">Perusahaan usulan</p><p class="mt-1 font-semibold text-zinc-900">{{ detailTarget?.company?.proposal?.name || '-' }}</p></div>
                             <div class="border-b border-zinc-100 pb-3"><p class="text-slate-500">Alamat/kota</p><p class="mt-1 font-semibold text-zinc-900">{{ detailTarget?.company?.proposal?.address || '-' }}</p></div>
                             <div><p class="text-slate-500">Penempatan final</p><p class="mt-1 font-semibold text-zinc-900">{{ detailTarget?.company?.final?.name || 'Belum ditetapkan kampus' }}</p></div>
@@ -896,6 +904,7 @@ const placementLink = (item: RegistrationItem) =>
                             <div v-for="attachment in [
                                 { label: 'Proposal PKL', value: detailTarget?.proposal_attachment },
                                 { label: 'Transkrip Nilai', value: detailTarget?.transcript_attachment },
+                                { label: 'Bukti Pembayaran', value: detailTarget?.payment_proof_attachment },
                                 { label: 'Surat Rekomendasi Kaprodi', value: detailTarget?.recommendation_attachment },
                             ]" :key="attachment.label" class="border-b border-zinc-100 pb-4 last:border-b-0 last:pb-0">
                                 <p class="font-bold text-zinc-900">{{ attachment.label }}</p>

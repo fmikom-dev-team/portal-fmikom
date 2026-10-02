@@ -88,6 +88,17 @@ class RegistrationController extends Controller
         );
     }
 
+    public function downloadPaymentProof(PendaftaranMagang $pendaftaran): BinaryFileResponse
+    {
+        $extension = pathinfo((string) $pendaftaran->bukti_pembayaran_original_name, PATHINFO_EXTENSION) ?: 'pdf';
+
+        return $this->downloadAttachment(
+            $pendaftaran->bukti_pembayaran_path,
+            'bukti-pembayaran-pkl-'.$pendaftaran->id.'.'.$extension,
+            'File bukti pembayaran PKL tidak ditemukan.',
+        );
+    }
+
     public function downloadRecommendation(PendaftaranMagang $pendaftaran): BinaryFileResponse
     {
         return $this->downloadAttachment(

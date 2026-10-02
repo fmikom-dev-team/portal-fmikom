@@ -6,9 +6,7 @@ import {
     CalendarCheck,
     ClipboardList,
     FileText,
-    GraduationCap,
     House,
-    Landmark,
     LogOut,
     UserRound,
 } from 'lucide-vue-next';
@@ -23,7 +21,9 @@ const siteSettings = computed(() => (page.props as any).siteSettings || {});
 const brandLogo = computed<string | null>(() => {
     const logo = siteSettings.value?.brand_logo;
 
-    return typeof logo === 'string' && logo.trim().length > 0 ? logo : null;
+    return typeof logo === 'string' && logo.trim().length > 0
+        ? logo
+        : '/asset/brand-logo.webp';
 });
 
 const currentPath = computed(() => {
@@ -127,10 +127,6 @@ const logout = () => {
                             loading="eager"
                             decoding="async"
                         />
-                        <template v-else>
-                            <Landmark class="size-5" />
-                            <GraduationCap class="absolute -right-1 -bottom-1 size-3.5 rounded-full bg-wims-card text-blue-500 dark:bg-slate-800 dark:text-blue-300" />
-                        </template>
                     </div>
                     <div v-if="!collapsed">
                         <h1 class="text-[15px] font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">WIMS</h1>

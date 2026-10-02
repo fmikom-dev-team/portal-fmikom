@@ -57,6 +57,8 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
             ->name('registration');
         Route::post('/pendaftaran', [MahasiswaRegistrationController::class, 'store'])
             ->name('registration.store');
+        Route::post('/pendaftaran/{pendaftaran}/proposal', [MahasiswaRegistrationController::class, 'uploadProposal'])
+            ->name('registration.proposal.upload');
         Route::get('/pendaftaran/template-proposal/download', [MahasiswaRegistrationController::class, 'downloadProposalTemplate'])
             ->name('registration.proposal-template.download');
 
@@ -127,6 +129,8 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
             ->name('registrations.proposal.download');
         Route::get('/pendaftaran/{pendaftaran}/transcript/download', [AdminRegistrationController::class, 'downloadTranscript'])
             ->name('registrations.transcript.download');
+        Route::get('/pendaftaran/{pendaftaran}/payment-proof/download', [AdminRegistrationController::class, 'downloadPaymentProof'])
+            ->name('registrations.payment-proof.download');
         Route::get('/pendaftaran/{pendaftaran}/recommendation/download', [AdminRegistrationController::class, 'downloadRecommendation'])
             ->name('registrations.recommendation.download');
 

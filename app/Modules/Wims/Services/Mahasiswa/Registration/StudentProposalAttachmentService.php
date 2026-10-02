@@ -27,6 +27,11 @@ class StudentProposalAttachmentService
         return $this->storeToDirectory($file, 'rekomendasi-kaprodi', 'surat rekomendasi Kaprodi');
     }
 
+    public function storePaymentProof(UploadedFile $file): string
+    {
+        return $this->storeToDirectory($file, 'bukti-pembayaran-pkl', 'bukti pembayaran PKL');
+    }
+
     private function storeToDirectory(UploadedFile $file, string $directory, string $label): string
     {
         $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'pdf');
