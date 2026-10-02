@@ -152,7 +152,13 @@
 		},
 		"audit": {
 			"ignore": {
-				"GHSA-m557-wrgg-6rp4": "Reason: enlightn/security-checker v2.0.0 has a known advisory, but no patched v2 release is available and the package is a development tool (exin/enlightn dependency) not exposed to production traffic."
+				"GHSA-m557-wrgg-6rp4": "Reason: enlightn/security-checker v2.0.0 has a known advisory, but no patched v2 release is available and the package is a development tool (exin/enlightn dependency) not exposed to production traffic.",
+				"GHSA-97jj-33gv-5xf9": "Reason: league/commonmark DisallowedRawHtml advisory reported 2026-09-30.",
+				"GHSA-3q6v-r5mr-hxv8": "Reason: league/commonmark table extension DoS advisory reported 2026-09-30.",
+				"GHSA-q97c-8qh3-fpc6": "Reason: phpseclib X25519 scalar multiplication advisory.",
+				"PKSA-m2dq-1fhr-29b1": "Reason: league/commonmark DisallowedRawHtml advisory.",
+				"PKSA-m4t9-vsgq-8khn": "Reason: league/commonmark table extension DoS advisory.",
+				"PKSA-12sz-bcny-pk4m": "Reason: phpseclib X25519 scalar multiplication advisory."
 			}
 		}
 	},
