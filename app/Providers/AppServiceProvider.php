@@ -38,6 +38,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
@@ -310,6 +312,14 @@ class AppServiceProvider extends ServiceProvider
                     'status' => 'Delivered',
                 ]);
             }
+        });
+
+        Queue::failing(function (JobFailed $event) {
+            Log::error('[QueueWorker] Job failed: '.$event->job->resolveName(), [
+                'connection' => $event->connectionName,
+                'queue' => $event->job->getQueue(),
+                'exception' => $event->exception->getMessage(),
+            ]);
         });
     }
 

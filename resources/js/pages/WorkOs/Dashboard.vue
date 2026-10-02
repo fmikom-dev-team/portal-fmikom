@@ -294,9 +294,9 @@ onMounted(() => {
 		} as any);
 	}, 5000);
 
-	// Mark initially loaded props as loaded
+	// Mark initially loaded props as loaded only if they contain actual data
 	Object.keys(props).forEach((key) => {
-		if ((props as any)[key] !== undefined && (props as any)[key] !== null) {
+		if (!isPropEmpty(key)) {
 			loadedProps.value[key] = true;
 		}
 	});

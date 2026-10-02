@@ -101,7 +101,7 @@ class DashboardController extends Controller // NOSONAR
             'radarBlockedItems' => fn () => $shouldLoad('radarBlockedItems', ['radar']) ? RadarBlockedItem::all()->toArray() : [],
             'auditStats' => fn () => $shouldLoad('auditStats', ['audit-logs']) ? $this->getAuditStats() : [],
             'auditRecentEvents' => fn () => $shouldLoad('auditRecentEvents', ['audit-logs']) ? $this->getAuditRecentEvents($request) : [],
-            'smtpConfig' => fn () => $shouldLoad('smtpConfig', ['emails']) ? $this->getSmtpConfig() : [],
+            'smtpConfig' => fn () => $shouldLoad('smtpConfig', ['emails']) ? $this->getSmtpConfig() : null,
             'emailLogs' => fn () => $shouldLoad('emailLogs', ['emails']) ? $this->getEmailLogs() : [],
             'webhookConfig' => fn () => $shouldLoad('webhookConfig', ['notifications']) ? $this->getWebhookConfig() : null,
             'webhookDeliveries' => fn () => $shouldLoad('webhookDeliveries', ['notifications']) ? $this->getWebhookDeliveries() : [],
@@ -1356,6 +1356,27 @@ class DashboardController extends Controller // NOSONAR
         }
 
         $this->updateEnvFile($envData);
+
+        // 3. Clear resolved mailers from runtime memory
+        try {
+            Mail::purge();
+        } catch (\Throwable $e) {
+            // Ignore if mailer cannot be purged
+        }
+
+        // 4. Signal background queue workers to reload dynamically with new credentials
+        try {
+            Artisan::call('queue:restart');
+        } catch (\Throwable $e) {
+            // Ignore if queue:restart is not permitted
+        }
+
+        // 5. Signal Octane workers to reload if running
+        try {
+            Artisan::call('octane:reload');
+        } catch (\Throwable $e) {
+            // Ignore if Octane is not active
+        }
 
         return response()->json([
             'success' => true,
