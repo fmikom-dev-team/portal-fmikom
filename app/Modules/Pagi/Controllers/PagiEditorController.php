@@ -23,6 +23,7 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class PagiEditorController extends Controller implements HasMiddleware
@@ -176,7 +177,7 @@ class PagiEditorController extends Controller implements HasMiddleware
         }
 
         // Dispatch realtime event to update subscriber profiles & feeds
-        PagiWorkCreated::dispatch($portfolio);
+        $this->safeBroadcast(fn () => PagiWorkCreated::dispatch($portfolio), 'PagiWorkCreated');
 
         if ($portfolio->status === 'review') {
             return redirect()->route('module.pagi.dashboard')->with('warning', 'Karya berhasil dibuat namun sedang dalam peninjauan moderasi otomatis.');
@@ -248,7 +249,7 @@ class PagiEditorController extends Controller implements HasMiddleware
         }
 
         // Dispatch realtime event to update subscriber profiles & feeds
-        PagiWorkCreated::dispatch($portfolio);
+        $this->safeBroadcast(fn () => PagiWorkCreated::dispatch($portfolio), 'PagiWorkCreated');
 
         $message = $portfolio->status === 'review'
             ? 'Karya berhasil ditambahkan namun sedang dalam peninjauan moderasi otomatis.'
@@ -345,7 +346,7 @@ class PagiEditorController extends Controller implements HasMiddleware
             ]);
         }
 
-        PagiWorkUpdated::dispatch($editor);
+        $this->safeBroadcast(fn () => PagiWorkUpdated::dispatch($editor), 'PagiWorkUpdated');
 
         return redirect()->route('module.pagi.profile')->with('success', 'Portfolio updated successfully!');
     }
@@ -371,7 +372,7 @@ class PagiEditorController extends Controller implements HasMiddleware
 
         $editor->delete();
 
-        PagiWorkDeleted::dispatch($workId, $userId);
+        $this->safeBroadcast(fn () => PagiWorkDeleted::dispatch($workId, $userId), 'PagiWorkDeleted');
 
         Cache::forget("pagi_public_profile_{$userId}");
         Cache::forget("recent_notifs_{$userId}");
@@ -826,6 +827,15 @@ class PagiEditorController extends Controller implements HasMiddleware
                 'description' => '[Auto Moderasi AI] Terdeteksi konten berisiko: '.($reasonText ?: 'Gambar / Teks Sensitif'),
                 'status' => 'pending',
             ]);
+        }
+    }
+
+    private function safeBroadcast(callable $callback, string $eventName): void
+    {
+        try {
+            $callback();
+        } catch (\Throwable $e) {
+            Log::warning("Pagi event broadcast {$eventName} failed: ".$e->getMessage());
         }
     }
 }
