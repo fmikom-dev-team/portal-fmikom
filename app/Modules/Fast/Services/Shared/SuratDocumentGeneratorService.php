@@ -15,6 +15,7 @@ use BaconQrCode\Renderer\RendererStyle\RendererStyle;
 use BaconQrCode\Writer;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 // use Barryvdh\DomPDF\Facade\Pdf;
@@ -331,6 +332,10 @@ class SuratDocumentGeneratorService
         if (! $canUseMpdf) {
             $domPdf = $this->renderPdfOutputWithDompdf($viewPayload, $attachmentSection);
             if ($domPdf !== null) {
+                Log::warning('FASt PDF renderer selected: DomPDF fallback.', [
+                    'attachment_section' => $attachmentSection !== null,
+                ]);
+
                 return $domPdf;
             }
         }
@@ -404,23 +409,19 @@ CSS;
             throw new \RuntimeException('Renderer PDF bundle tidak tersedia di server ini.');
         }
 
-        // Margin (mm). margin_bottom harus cukup menampung tinggi footer
-        // berjalan (kop instansi + alamat + email) agar isi surat di SEMUA
-        // halaman tidak menabrak footer.
-        $mpdf = new Mpdf([
-            'mode' => 'utf-8',
-            'format' => 'A4',
-            'margin_top' => $marginTop,
-            'margin_bottom' => 16,
-            'margin_left' => 15,
-            'margin_right' => 15,
-            'margin_header' => 3,
-            'margin_footer' => 4,
-            'default_font' => $fontFamilyBody,
-            'fontDir' => $fontDir,
-            'fontdata' => $fontdata,
-            'tempDir' => $tempDir,
-            'cacheCleanupInterval' => app()->runningUnitTests() ? false : 3600,
+        // "stretch" mempertahankan margin dari konfigurasi/@page sebagai batas minimum,
+        // lalu menambah ruang bila tinggi kop/footer native mPDF melebihi batas tersebut.
+        // Ini penting karena header/footer FASt dinamis dan dirender terpisah dari body.
+        $mpdf = new Mpdf($this->mpdfConfiguration(
+            $marginTop,
+            $fontFamilyBody,
+            $fontDir,
+            $fontdata,
+            $tempDir,
+        ));
+
+        Log::info('FASt PDF renderer selected: mPDF fallback.', [
+            'attachment_section' => $attachmentSection !== null,
         ]);
 
         $digitalValidationNote = 'Dokumen ini telah ditandatangani secara elektronik dan diterbitkan oleh Universitas Nahdlatul Ulama Al Ghazali.';
@@ -435,12 +436,14 @@ CSS;
 
         $footerWrapper .= '</div>';
 
-        $mpdf->SetHTMLHeader('<div style="width:100%; margin-top: -1mm;">'.$headerHtml.'</div>');
-        $mpdf->SetHTMLFooter($footerWrapper);
-
-        // Tulis style sekali, lalu body sekali (jangan duplikat).
+        // Native header/footer harus dideklarasikan dalam lifecycle @page mPDF.
+        // SetHTMLHeader()/SetHTMLFooter() langsung dihitung sebelum CSS @page body
+        // diterapkan, sehingga margin dinamis dapat ditimpa dan footer dapat dimatikan.
         $htmlBodyMode = HTMLParserMode::HTML_BODY;
-        $mpdf->WriteHTML("<style>{$fontCss} {$styles} {$customCss}</style>", HTMLParserMode::HEADER_CSS);
+        $mpdf->WriteHTML(
+            $this->mpdfHeaderFooterDocument($fontCss, $styles, $customCss, $headerHtml, $footerWrapper),
+            $this->mpdfHeaderFooterParserMode(),
+        );
         $mpdf->WriteHTML($bodyHtml, $htmlBodyMode);
 
         if ($attachmentSection !== null && isset($attachmentSection['html']) && filled($attachmentSection['html'])) {
@@ -453,6 +456,73 @@ CSS;
         }
 
         return $mpdf->Output('', 'S');
+    }
+
+    /**
+     * @param  array<int, string>  $fontDir
+     * @param  array<string, array<string, mixed>>  $fontdata
+     * @return array<string, mixed>
+     */
+    protected function mpdfConfiguration(
+        string $marginTop,
+        string $fontFamilyBody,
+        array $fontDir,
+        array $fontdata,
+        string $tempDir,
+    ): array {
+        return [
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            // mPDF menghitung tinggi header/footer sebelum body ditulis. Pada jalur
+            // tersebut nilai margin harus numerik (mm), bukan string CSS seperti "5mm".
+            'margin_top' => $this->extractMillimeters($marginTop, 12.0),
+            'margin_bottom' => 16,
+            'margin_left' => 15,
+            'margin_right' => 15,
+            'margin_header' => 3,
+            'margin_footer' => 4,
+            'setAutoTopMargin' => 'stretch',
+            'setAutoBottomMargin' => 'stretch',
+            'autoMarginPadding' => 2,
+            'default_font' => $fontFamilyBody,
+            'fontDir' => $fontDir,
+            'fontdata' => $fontdata,
+            'tempDir' => $tempDir,
+            'cacheCleanupInterval' => app()->runningUnitTests() ? false : 3600,
+        ];
+    }
+
+    protected function mpdfHeaderFooterDocument(
+        string $fontCss,
+        string $styles,
+        string $customCss,
+        string $headerHtml,
+        string $footerHtml,
+    ): string {
+        return <<<HTML
+<style>
+{$fontCss}
+{$styles}
+{$customCss}
+@page {
+    header: html_fast_header;
+    footer: html_fast_footer;
+}
+</style>
+<htmlpageheader name="fast_header">
+<div style="width:100%; margin-top: -1mm;">{$headerHtml}</div>
+</htmlpageheader>
+<htmlpagefooter name="fast_footer">
+{$footerHtml}
+</htmlpagefooter>
+HTML;
+    }
+
+    protected function mpdfHeaderFooterParserMode(): int
+    {
+        // DEFAULT_MODE adalah satu-satunya mode publik yang membaca CSS, memproses
+        // @page, dan mendaftarkan htmlpageheader/htmlpagefooter sebelum page dibuat.
+        return HTMLParserMode::DEFAULT_MODE;
     }
 
     /**
@@ -502,6 +572,10 @@ CSS;
         $chromeBinary = $this->resolveChromeBinary();
 
         if ($chromeBinary === null) {
+            Log::info('FASt PDF Chrome renderer unavailable; using fallback renderer.', [
+                'reason' => 'chrome_binary_not_found',
+            ]);
+
             return null;
         }
 
@@ -537,8 +611,18 @@ CSS;
         $process->run();
 
         if (! $process->isSuccessful() || ! File::exists($pdfPath)) {
+            Log::warning('FASt PDF Chrome renderer failed; using fallback renderer.', [
+                'exit_code' => $process->getExitCode(),
+                'pdf_created' => File::exists($pdfPath),
+                'stderr' => Str::limit(trim($process->getErrorOutput()), 1000),
+            ]);
+
             return null;
         }
+
+        Log::info('FASt PDF renderer selected: Chrome.', [
+            'attachment_section' => $attachmentSection !== null,
+        ]);
 
         return File::get($pdfPath);
     }
