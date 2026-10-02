@@ -121,7 +121,9 @@ class RegistrationController extends Controller
         ]);
 
         $registration = $this->studentRegistrationPageService->registrationForStudent($request->user()->id, $pendaftaran);
-        abort_unless($registration, 404);
+        if ($registration === null) {
+            abort(404);
+        }
 
         $scanResult = app(VirusScannerService::class)->scan($validated['proposal_pkl']);
         if (! $scanResult['safe']) {
