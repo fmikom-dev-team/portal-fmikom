@@ -1066,6 +1066,7 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
             :mode="viewerType"
             :title="viewerTitle"
             :url="viewerUrl"
+            :download-url="props.pdfUrl || `/documents/surat/${props.id}/pdf?refresh=1`"
             :show-html-zoom-controls="true"
             :show-thumbnails="false"
             :initial-zoom="100"

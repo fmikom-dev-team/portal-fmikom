@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import { ExternalLink, FileText, LoaderCircle, RotateCcw, X, ZoomIn, ZoomOut } from 'lucide-vue-next';
+import { Download, ExternalLink, FileText, LoaderCircle, RotateCcw, X, ZoomIn, ZoomOut } from 'lucide-vue-next';
 import PdfViewer from '@/components/PdfViewer.vue';
 
 type PreviewMode = 'html' | 'pdf';
@@ -13,6 +13,7 @@ const props = withDefaults(
         url: string | null;
         subtitle?: string | null;
         pdfFilename?: string;
+        downloadUrl?: string | null;
         showThumbnails?: boolean;
         initialZoom?: number;
         htmlInitialZoom?: number;
@@ -25,6 +26,7 @@ const props = withDefaults(
     {
         subtitle: null,
         pdfFilename: 'Dokumen.pdf',
+        downloadUrl: null,
         showThumbnails: false,
         initialZoom: 100,
         htmlInitialZoom: 100,
@@ -47,6 +49,7 @@ const iframeZoom = ref(props.initialZoom);
 const iframeVersion = ref(0);
 
 const isHtmlMode = computed(() => props.mode === 'html');
+const isPdfMode = computed(() => props.mode === 'pdf');
 const iframeFilename = computed(() => props.pdfFilename || props.title);
 const iframeScale = computed(() => iframeZoom.value / 100);
 
@@ -186,7 +189,7 @@ onUnmounted(() => {
                     </template>
 
                     <button
-                        v-if="showOpenInNewTab"
+                        v-if="isHtmlMode && showOpenInNewTab"
                         type="button"
                         class="inline-flex size-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
                         @click="openNewTab"
@@ -205,6 +208,31 @@ onUnmounted(() => {
             </div>
 
             <slot name="banner" />
+
+            <div
+                v-if="isPdfMode && url"
+                class="flex shrink-0 flex-col gap-2 border-b border-white/10 bg-slate-900 px-3 py-2 sm:flex-row sm:items-center sm:justify-end sm:px-5"
+            >
+                <a
+                    :href="url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-blue-500 bg-white px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50"
+                >
+                    <ExternalLink class="size-4" />
+                    Buka PDF
+                </a>
+                <a
+                    v-if="downloadUrl"
+                    :href="downloadUrl"
+                    :download="pdfFilename"
+                    rel="noopener noreferrer"
+                    class="fast-btn fast-btn-primary inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold"
+                >
+                    <Download class="size-4" />
+                    Unduh PDF
+                </a>
+            </div>
 
             <div v-if="mode === 'html'" class="relative flex-1 overflow-hidden bg-slate-800">
                 <div
@@ -235,7 +263,7 @@ onUnmounted(() => {
                                 Muat ulang
                             </button>
                             <button
-                                v-if="showOpenInNewTab"
+                                v-if="isHtmlMode && showOpenInNewTab"
                                 type="button"
                                 class="fast-btn fast-btn-primary rounded-xl px-4 py-2 text-xs font-semibold"
                                 @click="openNewTab"
