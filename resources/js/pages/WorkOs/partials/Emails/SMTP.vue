@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import axios from "axios";
+import { router } from "@inertiajs/vue3";
 import { reactive, ref, watch } from "vue";
 import { toast } from "../../composables/useWorkOs";
 
@@ -28,9 +29,9 @@ const testLogsText = ref<string[]>([]);
 watch(
 	() => props.smtpConfig,
 	(newVal) => {
-		if (newVal) {
+		if (newVal && !Array.isArray(newVal) && Object.keys(newVal).length > 0) {
 			configForm.host = newVal.host || "";
-			configForm.port = newVal.port || 587;
+			configForm.port = Number(newVal.port) || 587;
 			configForm.sender = newVal.sender || "";
 			configForm.encryption = newVal.encryption || "tls";
 			configForm.username = newVal.username || "";
@@ -46,6 +47,11 @@ async function saveSmtpConfig() {
 		const res = await axios.post("/workos/emails/config", configForm);
 		if (res.data.success) {
 			toast(res.data.message || "Configuration saved successfully!", "success");
+			router.reload({
+				only: ["smtpConfig"],
+				preserveScroll: true,
+				preserveState: true,
+			});
 		} else {
 			toast(res.data.message || "Failed to save configuration.", "error");
 		}
