@@ -58,8 +58,14 @@ class MonitoringController extends Controller
         $mahasiswaId = (int) $mahasiswaId;
         $todayDate = now()->toDateString();
         $requestedDate = $this->monitoringRegistrationResolverService->normalizeDateInput($request->query('date')) ?? $todayDate;
+        $requestedPendaftaranId = $request->integer('pendaftaran');
 
-        $pendaftaran = $this->monitoringRegistrationResolverService->resolveForCompany($company, $mahasiswaId, $requestedDate);
+        $pendaftaran = $this->monitoringRegistrationResolverService->resolveForCompany(
+            $company,
+            $mahasiswaId,
+            $requestedDate,
+            $requestedPendaftaranId > 0 ? $requestedPendaftaranId : null,
+        );
         abort_unless($pendaftaran !== null, 403);
 
         $this->attendanceSyncService->syncForRegistration($pendaftaran);

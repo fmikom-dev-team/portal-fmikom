@@ -423,11 +423,13 @@ const rejectAbsenceRequest = (id: number) => {
 };
 
 const openMonitoring = (student: StudentItem) => {
-    if (!student.student_id) {
+    if (!student.student_id || !student.registration_id) {
         return;
     }
 
-    router.visit(`/wims/mitra/monitoring/${student.student_id}`);
+    router.visit(
+        `/wims/mitra/monitoring/${student.student_id}?pendaftaran=${student.registration_id}`,
+    );
 };
 
 const openMonitoringIndex = (status?: 'aktif' | 'selesai') => {
@@ -449,11 +451,13 @@ const openAssessment = (student: StudentItem) => {
 };
 
 const openWarningMonitoring = (warning: WarningItem) => {
-    if (!warning.student_id) {
+    if (!warning.student_id || !warning.pendaftaran_id) {
         return;
     }
 
-    router.visit(`/wims/mitra/monitoring/${warning.student_id}`);
+    router.visit(
+        `/wims/mitra/monitoring/${warning.student_id}?pendaftaran=${warning.pendaftaran_id}`,
+    );
 };
 
 const warningDetails = (warning: WarningItem) => {

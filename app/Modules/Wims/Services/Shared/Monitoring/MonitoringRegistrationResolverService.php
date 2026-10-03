@@ -75,8 +75,15 @@ class MonitoringRegistrationResolverService
         PerusahaanMitra $company,
         int $mahasiswaId,
         string $date,
+        ?int $pendaftaranId = null,
     ): ?PendaftaranMagang {
         $baseQuery = $this->authorizedCompanyQuery($company, $mahasiswaId);
+
+        if ($pendaftaranId) {
+            return (clone $baseQuery)
+                ->whereKey($pendaftaranId)
+                ->first();
+        }
 
         return $this->resolveByDate($baseQuery, $date);
     }

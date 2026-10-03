@@ -133,11 +133,13 @@ const periodLabel = (student: StudentItem) => {
 };
 
 const openMonitoring = (student: StudentItem) => {
-    if (!student.student_id) {
+    if (!student.student_id || !student.registration_id) {
         return;
     }
 
-    router.visit(`/wims/mitra/monitoring/${student.student_id}`);
+    router.visit(
+        `/wims/mitra/monitoring/${student.student_id}?pendaftaran=${student.registration_id}`,
+    );
 };
 
 const openStudentProfile = (student: StudentItem) => {
@@ -527,7 +529,6 @@ const studentInitial = (student: StudentItem) => {
         </DialogContent>
     </Dialog>
 </template>
-
 
 
 

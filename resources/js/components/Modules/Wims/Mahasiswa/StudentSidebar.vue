@@ -118,7 +118,7 @@ const logout = () => {
             <div class="relative flex h-full flex-col px-4 py-6">
                 <!-- Logo -->
                 <div class="flex items-center gap-3 px-2 pb-8" :class="collapsed ? 'justify-center' : ''">
-                    <div class="relative flex size-10 items-center justify-center overflow-hidden rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-indigo-50 text-blue-700 shadow-[0_1px_6px_-2px_rgba(0,0,0,0.06)] dark:border-blue-500/30 dark:from-blue-500/15 dark:via-slate-800 dark:to-indigo-500/10 dark:text-blue-300 dark:shadow-none">
+                    <div class="relative flex size-10 items-center justify-center overflow-hidden">
                         <img
                             v-if="brandLogo"
                             :src="brandLogo"
@@ -130,7 +130,7 @@ const logout = () => {
                     </div>
                     <div v-if="!collapsed">
                         <h1 class="text-[15px] font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">WIMS</h1>
-                        <p class="text-[10px] font-medium tracking-wide text-slate-400 dark:text-slate-500">Portal Mahasiswa</p>
+                        <p class="text-[10px] font-medium tracking-wide text-slate-400 dark:text-slate-500">WIMS Mahasiswa</p>
                     </div>
                 </div>
 

@@ -13,7 +13,6 @@ import {
     LogOut,
     Menu,
     NotebookPen,
-    ShieldCheck,
     X,
     Users,
 } from 'lucide-vue-next';
@@ -34,13 +33,6 @@ const page = usePage<{
     };
     flash?: FlashProps;
 }>();
-const siteSettings = computed(() => (page.props as any).siteSettings || {});
-const brandLogo = computed<string | null>(() => {
-    const logo = siteSettings.value?.brand_logo;
-
-    return typeof logo === 'string' && logo.trim().length > 0 ? logo : null;
-});
-
 const currentPath = computed(() => {
     const [path] = page.url.split('?');
 
@@ -288,17 +280,15 @@ const activePageHeader = computed(
                     <div class="relative flex h-full flex-col px-4 py-6">
                         <div class="flex items-center gap-3 px-2 pb-8" :class="sidebarCollapsed ? 'justify-center' : ''">
                             <div
-                                class="relative flex size-10 items-center justify-center overflow-hidden rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-sky-50 text-blue-700 shadow-[0_1px_6px_-2px_rgba(0,0,0,0.06)]"
+                                class="relative flex size-10 items-center justify-center overflow-hidden"
                             >
                                 <img
-                                    v-if="brandLogo"
-                                    :src="brandLogo"
-                                    alt="Brand Logo"
+                                    src="/asset/brand-logo.webp"
+                                    alt="Logo UNUGHA"
                                     class="h-full w-full object-contain"
                                     loading="eager"
                                     decoding="async"
                                 />
-                                <ShieldCheck v-else class="size-5" />
                             </div>
                             <div v-if="!sidebarCollapsed">
                                 <p
@@ -307,7 +297,7 @@ const activePageHeader = computed(
                                     WIMS
                                 </p>
                                 <p class="mt-0.5 text-[10px] font-bold tracking-wide text-slate-400">
-                                    Panel Admin WIMS
+                                    Panel Admin WIMS UNUGHA
                                 </p>
                             </div>
                         </div>
@@ -469,7 +459,7 @@ const activePageHeader = computed(
                                     {{ user?.name || 'Admin WIMS' }}
                                 </p>
                                 <p class="truncate text-[10px] text-slate-500">
-                                    Panel Admin WIMS
+                                    Panel Admin WIMS UNUGHA
                                 </p>
                             </div>
                         </div>
@@ -503,24 +493,22 @@ const activePageHeader = computed(
                     <div class="flex items-start justify-between gap-3 px-4 py-4 sm:px-5 sm:py-5">
                         <div class="flex min-w-0 items-center gap-3">
                             <div
-                                class="relative flex size-10 items-center justify-center overflow-hidden rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-sky-50 text-blue-700 shadow-[0_1px_6px_-2px_rgba(0,0,0,0.06)]"
+                                class="relative flex size-10 items-center justify-center overflow-hidden"
                             >
                                 <img
-                                    v-if="brandLogo"
-                                    :src="brandLogo"
-                                    alt="Brand Logo"
+                                    src="/asset/brand-logo.webp"
+                                    alt="Logo UNUGHA"
                                     class="h-full w-full object-contain"
                                     loading="eager"
                                     decoding="async"
                                 />
-                                <ShieldCheck v-else class="size-5" />
                             </div>
                             <div class="min-w-0">
                                 <p class="truncate text-[15px] font-black uppercase tracking-[0.2em] text-blue-600">
                                     WIMS
                                 </p>
                                 <p class="mt-0.5 truncate text-[10px] font-bold tracking-wide text-slate-400">
-                                    Panel Admin WIMS
+                                    Panel Admin WIMS UNUGHA
                                 </p>
                             </div>
                         </div>
@@ -625,6 +613,4 @@ const activePageHeader = computed(
         </transition>
     </div>
 </template>
-
-
 

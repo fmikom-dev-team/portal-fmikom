@@ -282,7 +282,9 @@ const openSelectedDate = (value: string) => {
         return;
     }
 
-    router.visit(`/wims/mitra/monitoring/${props.student.id}?date=${encodeURIComponent(value)}`);
+    router.visit(
+        `/wims/mitra/monitoring/${props.student.id}?pendaftaran=${props.student.pendaftaran_id}&date=${encodeURIComponent(value)}`,
+    );
 };
 </script>
 
