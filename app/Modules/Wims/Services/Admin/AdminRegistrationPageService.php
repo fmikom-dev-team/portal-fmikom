@@ -92,6 +92,13 @@ class AdminRegistrationPageService
                 'uploaded_at' => $pendaftaran->transkrip_nilai_uploaded_at?->translatedFormat('d M Y H:i'),
                 'download_url' => route('wims.admin.registrations.transcript.download', $pendaftaran),
             ] : null,
+            'payment_proof_attachment' => filled($pendaftaran->bukti_pembayaran_path) ? [
+                'exists' => true,
+                'name' => $pendaftaran->bukti_pembayaran_original_name,
+                'uploaded_at' => $pendaftaran->bukti_pembayaran_uploaded_at?->translatedFormat('d M Y H:i'),
+                'download_url' => route('wims.admin.registrations.payment-proof.download', $pendaftaran),
+            ] : null,
+            'placement_method' => $pendaftaran->metode_penempatan,
             'recommendation_attachment' => filled($pendaftaran->surat_rekomendasi_kaprodi_path) ? [
                 'exists' => true,
                 'name' => $pendaftaran->surat_rekomendasi_kaprodi_original_name,

@@ -50,6 +50,7 @@ class StudentRegistrationPageService
                 'tanggal_selesai' => $formSource?->tanggal_selesai?->toDateString(),
                 'perusahaan_diminati_nama' => $formSource?->perusahaan_diminati_nama,
                 'perusahaan_diminati_alamat' => $formSource?->perusahaan_diminati_alamat,
+                'metode_penempatan' => $formSource?->metode_penempatan,
                 'catatan_pengajuan' => $formSource?->catatan_pengajuan,
                 'status_kip' => $formSource?->status_kip,
                 'sks_ditempuh' => $formSource?->sks_ditempuh,
@@ -116,6 +117,7 @@ class StudentRegistrationPageService
                     'name' => $registration->perusahaan?->nama,
                 ],
             ],
+            'placement_method' => $registration->metode_penempatan,
             'application_note' => $registration->catatan_pengajuan,
             'revision_note' => $registration->catatan_revisi_admin,
             'proposal_attachment' => filled($registration->proposal_pkl_path) ? [
@@ -123,10 +125,17 @@ class StudentRegistrationPageService
                 'name' => $registration->proposal_pkl_original_name,
                 'uploaded_at' => $registration->proposal_pkl_uploaded_at?->translatedFormat('d M Y H:i'),
             ] : null,
+            'can_upload_proposal' => in_array($registration->status, ['pending', 'revisi'], true),
+            'proposal_upload_url' => route('wims.registration.proposal.upload', $registration),
             'transcript_attachment' => filled($registration->transkrip_nilai_path) ? [
                 'exists' => true,
                 'name' => $registration->transkrip_nilai_original_name,
                 'uploaded_at' => $registration->transkrip_nilai_uploaded_at?->translatedFormat('d M Y H:i'),
+            ] : null,
+            'payment_proof_attachment' => filled($registration->bukti_pembayaran_path) ? [
+                'exists' => true,
+                'name' => $registration->bukti_pembayaran_original_name,
+                'uploaded_at' => $registration->bukti_pembayaran_uploaded_at?->translatedFormat('d M Y H:i'),
             ] : null,
             'recommendation_attachment' => filled($registration->surat_rekomendasi_kaprodi_path) ? [
                 'exists' => true,
