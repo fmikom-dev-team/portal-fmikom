@@ -9,6 +9,14 @@ import {
 } from 'lucide-vue-next';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
     Card,
@@ -106,6 +114,9 @@ const registrationFocus = ref<number | null>(props.filters.pendaftaran ?? null);
 const processingId = ref<number | null>(null);
 const bulkProcessing = ref<'selected' | 'filtered' | null>(null);
 const selectedCompletionIds = ref<number[]>([]);
+const completionDialogOpen = ref(false);
+const completionMode = ref<'single' | 'selected' | 'filtered'>('single');
+const completionTarget = ref<PlacementItem | null>(null);
 const assignmentForms = reactive<
     Record<number, { perusahaan_id: string; dosen_pembimbing_id: string }>
 >({});
@@ -373,71 +384,98 @@ const activatePlacement = (item: PlacementItem) => {
     );
 };
 
-const completePlacement = (item: PlacementItem) => {
-    if (!item.can_complete_now) {
+const openCompletionDialog = (
+    mode: 'single' | 'selected' | 'filtered',
+    item?: PlacementItem,
+) => {
+    if (mode === 'single' && !item?.can_complete_now) {
         return;
     }
 
-    processingId.value = item.id;
+    if (mode === 'selected' && !selectedCompletionIds.value.length) {
+        return;
+    }
 
-    router.post(
-        wimsRoutes.admin.placements.complete(item.id).url,
-        {},
-        {
-            preserveScroll: true,
-            preserveState: true,
-            onFinish: () => {
-                processingId.value = null;
-            },
-        },
-    );
+    if (
+        mode === 'filtered' &&
+        !(props.batchActions.eligible_with_current_filters ?? 0)
+    ) {
+        return;
+    }
+
+    completionMode.value = mode;
+    completionTarget.value = item ?? null;
+    completionDialogOpen.value = true;
+};
+
+const completePlacement = (item: PlacementItem) => {
+    openCompletionDialog('single', item);
 };
 
 const completeSelectedPlacements = () => {
-    if (!selectedCompletionIds.value.length) {
-        return;
-    }
-
-    if (
-        !window.confirm(
-            `Tandai ${selectedCompletionIds.value.length} mahasiswa terpilih sebagai selesai PKL?`,
-        )
-    ) {
-        return;
-    }
-
-    bulkProcessing.value = 'selected';
-
-    router.post(
-        '/wims/admin/penempatan/complete-selected',
-        {
-            ids: selectedCompletionIds.value,
-        },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            onSuccess: () => {
-                selectedCompletionIds.value = [];
-            },
-            onFinish: () => {
-                bulkProcessing.value = null;
-            },
-        },
-    );
+    openCompletionDialog('selected');
 };
 
 const completeFilteredPlacements = () => {
-    const totalEligible = props.batchActions.eligible_with_current_filters ?? 0;
+    openCompletionDialog('filtered');
+};
 
-    if (!totalEligible) {
+const submitCompletion = () => {
+    if (completionMode.value === 'single') {
+        const item = completionTarget.value;
+
+        if (!item) {
+            return;
+        }
+
+        processingId.value = item.id;
+
+        router.post(
+            wimsRoutes.admin.placements.complete(item.id).url,
+            {},
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => {
+                    completionDialogOpen.value = false;
+                    completionTarget.value = null;
+                },
+                onFinish: () => {
+                    processingId.value = null;
+                },
+            },
+        );
         return;
     }
 
-    if (
-        !window.confirm(
-            `Tandai ${totalEligible} mahasiswa dari hasil filter saat ini sebagai selesai PKL?`,
-        )
-    ) {
+    if (completionMode.value === 'selected') {
+        if (!selectedCompletionIds.value.length) {
+            return;
+        }
+
+        bulkProcessing.value = 'selected';
+
+        router.post(
+            '/wims/admin/penempatan/complete-selected',
+            {
+                ids: selectedCompletionIds.value,
+            },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => {
+                    selectedCompletionIds.value = [];
+                    completionDialogOpen.value = false;
+                },
+                onFinish: () => {
+                    bulkProcessing.value = null;
+                },
+            },
+        );
+        return;
+    }
+
+    if (!(props.batchActions.eligible_with_current_filters ?? 0)) {
         return;
     }
 
@@ -456,6 +494,7 @@ const completeFilteredPlacements = () => {
             preserveState: true,
             onSuccess: () => {
                 selectedCompletionIds.value = [];
+                completionDialogOpen.value = false;
             },
             onFinish: () => {
                 bulkProcessing.value = null;
@@ -1115,5 +1154,57 @@ const studentInitial = (name?: string | null) => {
                 </div>
             </CardContent>
         </Card>
+
+        <Dialog v-model:open="completionDialogOpen">
+            <DialogContent class="sm:max-w-md">
+                <DialogHeader class="space-y-1.5 text-left">
+                    <DialogTitle class="text-[15px] font-bold text-slate-950">
+                        {{
+                            completionMode === 'single'
+                                ? 'Tandai PKL selesai?'
+                                : 'Selesaikan PKL massal?'
+                        }}
+                    </DialogTitle>
+                    <DialogDescription class="text-sm leading-6 text-slate-600">
+                        <template v-if="completionMode === 'single'">
+                            {{ completionTarget?.student?.name || '-' }}
+                        </template>
+                        <template v-else-if="completionMode === 'selected'">
+                            {{ selectedCompletionIds.length }} mahasiswa akan ditandai selesai.
+                        </template>
+                        <template v-else>
+                            {{
+                                batchActions.eligible_with_current_filters ?? 0
+                            }}
+                            mahasiswa dari hasil filter akan ditandai selesai.
+                        </template>
+                    </DialogDescription>
+                </DialogHeader>
+
+                <DialogFooter class="gap-2">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        class="h-10 rounded-lg border-zinc-200 text-sm font-bold text-zinc-700"
+                        @click="completionDialogOpen = false"
+                    >
+                        Batal
+                    </Button>
+                    <Button
+                        type="button"
+                        class="h-10 rounded-lg bg-emerald-600 text-sm font-bold text-white hover:bg-emerald-700"
+                        :disabled="
+                            (completionMode === 'single' &&
+                                processingId !== null) ||
+                            (completionMode !== 'single' &&
+                                bulkProcessing !== null)
+                        "
+                        @click="submitCompletion"
+                    >
+                        Ya, Selesaikan
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </div>
 </template>

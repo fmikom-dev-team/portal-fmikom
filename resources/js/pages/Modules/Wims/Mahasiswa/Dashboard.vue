@@ -272,61 +272,11 @@ const registrationCompanyLabel = computed(
 );
 const lecturerLabel = computed(() => props.registration?.lecturer?.name ?? 'Belum ada');
 const mentorLabel = computed(() => props.registration?.mentor?.name ?? 'Belum ada');
-const checkInTimeLabel = computed(
-    () => props.attendance.check_in_time ?? 'Belum check-in',
-);
 const checkOutTimeLabel = computed(
     () => props.attendance.check_out_time ?? 'Belum check-out',
 );
 const historyItems = computed(() => props.history.slice(0, 3));
 const latestAttendanceItem = computed(() => props.history[0] ?? null);
-
-const historyStatusTone = (item: HistoryProps) => {
-    const value = (item.label ?? item.status ?? '').toLowerCase();
-
-    if (value.includes('alfa') || value.includes('tidak hadir')) {
-        return {
-            card: 'border-rose-200/60 bg-rose-50 dark:border-rose-500/30 dark:bg-rose-500/15',
-            icon: 'bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400',
-            text: 'text-rose-700',
-            badge: 'border-rose-200/60 bg-rose-100 dark:border-rose-500/40 dark:bg-rose-500/25 text-rose-700 dark:text-rose-300',
-        };
-    }
-
-    if (value.includes('izin')) {
-        return {
-            card: 'border-amber-200/60 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/15',
-            icon: 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400',
-            text: 'text-amber-700',
-            badge: 'border-amber-200/60 bg-amber-100 dark:border-amber-500/40 dark:bg-amber-500/25 text-amber-700 dark:text-amber-300',
-        };
-    }
-
-    if (value.includes('sakit')) {
-        return {
-            card: 'border-violet-200/60 bg-violet-50 dark:border-violet-500/30 dark:bg-violet-500/15',
-            icon: 'bg-violet-100 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400',
-            text: 'text-violet-700',
-            badge: 'border-violet-200/60 bg-violet-100 dark:border-violet-500/40 dark:bg-violet-500/25 text-violet-700 dark:text-violet-300',
-        };
-    }
-
-    if (value.includes('terlambat')) {
-        return {
-            card: 'border-amber-200/60 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/15',
-            icon: 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400',
-            text: 'text-amber-700',
-            badge: 'border-amber-200/60 bg-amber-100 dark:border-amber-500/40 dark:bg-amber-500/25 text-amber-700 dark:text-amber-300',
-        };
-    }
-
-    return {
-        card: 'border-emerald-200/60 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/15',
-        icon: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400',
-        text: 'text-emerald-700',
-        badge: 'border-emerald-200/60 bg-emerald-100 dark:border-emerald-500/40 dark:bg-emerald-500/25 text-emerald-700 dark:text-emerald-300',
-    };
-};
 
 const currentProgressDays = computed(
     () => `${props.internship.completed_days ?? 0}/${props.internship.total_days ?? 0} hari`,
@@ -371,61 +321,11 @@ const registrationStatusLabel = computed(() => {
     return 'Belum Mengajukan';
 });
 
-const registrationStatusClasses = computed(() => {
-    if (props.registration.status === 'approved') {
-        return 'border-emerald-200/60 dark:border-emerald-500/40 bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300';
-    }
-
-    if (props.registration.status === 'aktif') {
-        return 'border-sky-200/60 dark:border-sky-500/40 bg-sky-50 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300';
-    }
-
-    if (props.registration.status === 'selesai') {
-        return 'border-violet-200/60 dark:border-violet-500/40 bg-violet-50 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300';
-    }
-
-    if (props.registration.status === 'revisi') {
-        return 'border-amber-200/60 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300';
-    }
-
-    if (props.registration.status === 'rejected') {
-        return 'border-rose-200/60 dark:border-rose-500/40 bg-rose-50 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300';
-    }
-
-    if (props.registration.status === 'pending') {
-        return 'border-blue-200/60 dark:border-blue-500/40 bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300';
-    }
-
-    return 'border-wims-border bg-slate-50 dark:border-slate-700 dark:bg-slate-800/70 text-slate-600 dark:text-slate-300';
-});
-
-const registrationStatusCardClasses = computed(() => {
-    if (props.registration.status === 'approved') {
-        return 'border-emerald-200/60 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/15';
-    }
-
-    if (props.registration.status === 'aktif') {
-        return 'border-sky-200/60 bg-sky-50 dark:border-sky-500/30 dark:bg-sky-500/15';
-    }
-
-    if (props.registration.status === 'selesai') {
-        return 'border-violet-200/60 bg-violet-50 dark:border-violet-500/30 dark:bg-violet-500/15';
-    }
-
-    if (props.registration.status === 'revisi') {
-        return 'border-amber-200/60 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/15';
-    }
-
-    if (props.registration.status === 'rejected') {
-        return 'border-rose-200/60 bg-rose-50 dark:border-rose-500/30 dark:bg-rose-500/15';
-    }
-
-    if (props.registration.status === 'pending') {
-        return 'border-blue-200/60 bg-blue-50 dark:border-blue-500/30 dark:bg-blue-500/15';
-    }
-
-    return 'border-wims-border/60 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-800/70';
-});
+const needsRegistrationAttention = computed(() =>
+    ['pending', 'revisi', 'rejected'].includes(
+        props.registration.status ?? '',
+    ),
+);
 
 const heroTitle = computed(() => {
     if (dashboardState.value === 'active') {
@@ -616,26 +516,6 @@ const latestLogbookMeta = computed(() => {
     return '';
 });
 
-const latestLogbookClasses = computed(() => {
-    if (latestLogbookLabel.value === 'Disetujui') {
-        return 'border-emerald-200 bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:border-emerald-800/50 dark:bg-emerald-900/20 dark:text-emerald-300';
-    }
-
-    if (latestLogbookLabel.value === 'Perlu revisi mitra') {
-        return 'border-rose-200 bg-rose-50 dark:bg-rose-500/15 text-rose-700 dark:border-rose-800/50 dark:bg-rose-900/20 dark:text-rose-300';
-    }
-
-    if (latestLogbookLabel.value === 'Menunggu review mitra') {
-        return 'border-amber-200 bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:border-amber-800/50 dark:bg-amber-900/20 dark:text-amber-300';
-    }
-
-    if (latestLogbookLabel.value === 'Belum diisi hari ini') {
-        return 'border-wims-border bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300';
-    }
-
-    return 'border-wims-border bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400';
-});
-
 const showHeroActions = computed(() =>
     ['not_registered', 'active'].includes(dashboardState.value)
     || (dashboardState.value === 'completed' && props.registration.can_register_next === true),
@@ -823,22 +703,22 @@ const heroActionButtonClass = 'h-12 w-full rounded-xl border-2 border-cyan-100 !
                                 </div>
                             </div>
 
-                            <div class="mt-5 overflow-hidden rounded-xl border border-wims-border/60 bg-slate-50/70 dark:border-slate-700/70 dark:bg-slate-800/30 divide-y divide-slate-200/70 dark:divide-slate-700/70">
-                                <div class="px-4 py-3">
+                            <div class="mt-5 border-t border-wims-border/60 divide-y divide-slate-200/70 dark:border-slate-700/70 dark:divide-slate-700/70">
+                                <div class="pt-4 pb-3">
                                     <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Perusahaan</p>
                                     <p class="mt-1 break-words text-sm font-bold text-wims-text">{{ registrationCompanyLabel }}</p>
                                 </div>
                                 <div class="grid gap-0 sm:grid-cols-2">
-                                    <div class="px-4 py-3 sm:border-r sm:border-slate-200/70 dark:sm:border-slate-700/70">
+                                    <div class="py-3 sm:pr-4 sm:border-r sm:border-slate-200/70 dark:sm:border-slate-700/70">
                                         <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Dosen Pembimbing</p>
                                         <p class="mt-1 break-words text-sm font-bold text-wims-text">{{ lecturerLabel }}</p>
                                     </div>
-                                    <div class="px-4 py-3">
+                                    <div class="py-3 sm:pl-4">
                                         <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Pembimbing Mitra</p>
                                         <p class="mt-1 break-words text-sm font-bold text-wims-text">{{ mentorLabel }}</p>
                                     </div>
                                 </div>
-                                <div class="px-4 py-3">
+                                <div class="pt-3">
                                     <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Periode</p>
                                     <p class="mt-1 break-words text-sm font-bold text-wims-text">{{ props.registration?.period_label || 'Belum tersedia' }}</p>
                                 </div>
@@ -859,23 +739,23 @@ const heroActionButtonClass = 'h-12 w-full rounded-xl border-2 border-cyan-100 !
                                 </div>
                             </div>
 
-                            <div class="mt-5 space-y-3">
+                            <div class="mt-5 divide-y divide-wims-border/60">
                                 <!-- Latest attendance -->
-                                <div class="rounded-xl border px-4 py-3.5 transition-colors" :class="latestAttendanceItem ? historyStatusTone(latestAttendanceItem).card : 'border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40'">
+                                <div class="px-1 py-3.5">
                                     <div class="flex items-center justify-between gap-3">
                                         <div class="min-w-0">
                                             <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Presensi terakhir</p>
                                             <p v-if="latestAttendanceItem?.date" class="mt-1 text-[13px] font-bold text-wims-text">{{ latestAttendanceItem.date }}</p>
                                         </div>
-                                        <Clock3 class="size-4 flex-shrink-0" :class="latestAttendanceItem ? historyStatusTone(latestAttendanceItem).text : 'text-slate-400'" />
+                                        <Clock3 class="size-4 flex-shrink-0 text-slate-400" />
                                     </div>
-                                    <p class="mt-2 text-[12px] font-semibold" :class="latestAttendanceItem ? historyStatusTone(latestAttendanceItem).text : 'text-slate-500 dark:text-slate-400'">
+                                    <p class="mt-2 text-[12px] font-semibold text-slate-600 dark:text-slate-400">
                                         {{ latestAttendanceItem ? `${latestAttendanceItem.time ? latestAttendanceItem.time + ' WIB - ' : ''}${latestAttendanceItem.label ?? latestAttendanceItem.status}` : 'Tidak ada aktivitas' }}
                                     </p>
                                 </div>
 
                                 <!-- Latest logbook -->
-                                <div class="rounded-xl border px-4 py-3.5 transition-colors" :class="latestLogbookClasses">
+                                <div class="px-1 py-3.5">
                                     <div class="flex items-start justify-between gap-3">
                                         <div class="min-w-0">
                                             <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Logbook terakhir</p>
@@ -887,7 +767,7 @@ const heroActionButtonClass = 'h-12 w-full rounded-xl border-2 border-cyan-100 !
                                 </div>
 
                                 <!-- Registration status -->
-                                <div class="rounded-xl border px-4 py-3.5 transition-colors" :class="registrationStatusCardClasses">
+                                <div v-if="needsRegistrationAttention" class="px-1 py-3.5">
                                     <div class="flex items-center justify-between gap-3">
                                         <div class="min-w-0">
                                             <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Status pengajuan</p>
@@ -904,55 +784,6 @@ const heroActionButtonClass = 'h-12 w-full rounded-xl border-2 border-cyan-100 !
 
                 <!-- Right Column -->
                 <div class="space-y-4">
-                    <!-- Progress & Presensi Card -->
-                    <div class="rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-300 hover:shadow-[0_8px_24px_-8px_rgba(0,0,0,0.06)]">
-                        <div class="p-5 sm:p-6">
-                            <div class="flex items-center gap-3">
-                                <div class="flex size-10 items-center justify-center rounded-xl bg-cyan-50 dark:bg-cyan-500/15 text-cyan-600 dark:text-cyan-400">
-                                    <CalendarDays class="size-5" />
-                                </div>
-                                <div>
-                                    <p class="text-[15px] font-bold text-wims-text">Progress & Presensi</p>
-                                    <p class="text-[11px] text-slate-500 dark:text-slate-400">Fokus aktivitas harian</p>
-                                </div>
-                            </div>
-
-                            <div class="mt-5 space-y-3">
-                                <!-- Progress bar section -->
-                                <div class="rounded-xl border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 p-4">
-                                    <div class="flex items-center justify-between">
-                                        <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Progres magang</p>
-                                        <span class="text-[11px] font-bold text-blue-600 dark:text-blue-400">{{ progressPercentage }}%</span>
-                                    </div>
-                                    <div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700/50">
-                                        <div class="h-full rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(59,130,246,0.3)]" :style="{ width: `${progressPercentage}%` }" />
-                                    </div>
-                                    <p class="mt-2 text-[11px] font-medium text-slate-500 dark:text-slate-400">{{ remainingDaysLabel }}</p>
-                                </div>
-
-                                <!-- Check-in/out times -->
-                                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                    <div class="rounded-xl border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-4 py-3 transition-colors hover:bg-slate-100/80 dark:hover:bg-slate-700/40">
-                                        <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Jam masuk</p>
-                                        <p class="mt-1.5 text-[13px] font-bold text-wims-text">{{ checkInTimeLabel }}</p>
-                                    </div>
-                                    <div class="rounded-xl border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-4 py-3 transition-colors hover:bg-slate-100/80 dark:hover:bg-slate-700/40">
-                                        <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Jam keluar</p>
-                                        <p class="mt-1.5 text-[13px] font-bold text-wims-text">{{ checkOutTimeLabel }}</p>
-                                    </div>
-                                </div>
-
-                                <!-- Activity status -->
-                                <div class="flex flex-col items-start gap-2 rounded-xl border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                                    <Badge variant="outline" class="rounded-full border px-2.5 py-0.5 text-[10px] font-bold" :class="activityStatusClasses.badge">
-                                        {{ activityStatusLabel }}
-                                    </Badge>
-                                    <span class="min-w-0 text-[11px] font-semibold leading-5 text-slate-500 dark:text-slate-400 sm:max-w-[220px] sm:text-right">{{ locationStatusLabel }}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Rekap Magang Card -->
                     <div class="rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-300 hover:shadow-[0_8px_24px_-8px_rgba(0,0,0,0.06)]">
                         <div class="p-5 sm:p-6">
@@ -966,35 +797,22 @@ const heroActionButtonClass = 'h-12 w-full rounded-xl border-2 border-cyan-100 !
                                 </div>
                             </div>
 
-                            <div class="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                                <div class="rounded-xl border border-blue-200/60 bg-slate-50/80 px-3 py-3 text-center dark:border-slate-700/70 dark:bg-slate-800/30">
+                            <div class="mt-5 grid grid-cols-2 gap-y-5 sm:grid-cols-4">
+                                <div class="px-3 text-center sm:border-r sm:border-wims-border/60">
                                     <p class="text-xl font-bold text-blue-700 dark:text-blue-300">{{ props.internship?.total_hadir ?? '-' }}</p>
                                     <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Hadir</p>
                                 </div>
-                                <div class="rounded-xl border border-amber-200/60 bg-slate-50/80 px-3 py-3 text-center dark:border-slate-700/70 dark:bg-slate-800/30">
+                                <div class="px-3 text-center sm:border-r sm:border-wims-border/60">
                                     <p class="text-xl font-bold text-amber-700 dark:text-amber-300">{{ props.internship?.total_izin ?? '-' }}</p>
                                     <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Izin</p>
                                 </div>
-                                <div class="rounded-xl border border-rose-200/60 bg-slate-50/80 px-3 py-3 text-center dark:border-slate-700/70 dark:bg-slate-800/30">
+                                <div class="px-3 text-center sm:border-r sm:border-wims-border/60">
                                     <p class="text-xl font-bold text-rose-700 dark:text-rose-300">{{ props.internship?.total_sakit ?? '-' }}</p>
                                     <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Sakit</p>
                                 </div>
-                                <div class="rounded-xl border border-violet-200/60 bg-slate-50/80 px-3 py-3 text-center dark:border-slate-700/70 dark:bg-slate-800/30">
+                                <div class="px-3 text-center">
                                     <p class="text-xl font-bold text-violet-700 dark:text-violet-300">{{ props.internship?.total_logbook_entries ?? '-' }}</p>
                                     <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Logbook</p>
-                                </div>
-                            </div>
-
-                            <div class="mt-4 rounded-xl border border-wims-border/60 bg-slate-50/80 px-4 py-3 dark:border-slate-700/70 dark:bg-slate-800/30">
-                                <div class="flex items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
-                                    <p class="min-w-0">
-                                        Total hari kerja:
-                                        <span class="font-bold text-wims-text">{{ props.internship?.completed_days ?? 0 }} / {{ props.internship?.total_days ?? 0 }} hari</span>
-                                    </p>
-                                    <p class="shrink-0">
-                                        Sisa:
-                                        <span class="font-bold text-blue-600 dark:text-blue-400">{{ props.internship?.remaining_days ?? 0 }} hari</span>
-                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -1012,18 +830,18 @@ const heroActionButtonClass = 'h-12 w-full rounded-xl border-2 border-cyan-100 !
                                 </div>
                             </div>
 
-                            <div v-if="historyItems.length" class="mt-4 space-y-2.5">
-                                <div v-for="item in historyItems" :key="String(item.id ?? item.date ?? item.time)" class="flex flex-col items-start gap-2 rounded-xl border px-4 py-3 transition-colors sm:flex-row sm:items-center sm:justify-between" :class="historyStatusTone(item).card">
+                            <div v-if="historyItems.length" class="mt-4 divide-y divide-wims-border/60">
+                                <div v-for="item in historyItems" :key="String(item.id ?? item.date ?? item.time)" class="flex flex-col items-start gap-2 px-1 py-3 sm:flex-row sm:items-center sm:justify-between">
                                     <div class="min-w-0">
                                         <p class="text-[13px] font-bold text-wims-text">{{ item.date || 'Tanggal tidak tersedia' }}</p>
                                         <p class="mt-0.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">{{ item.time ? `${item.time} WIB` : 'Waktu belum tersedia' }}</p>
                                     </div>
-                                    <Badge variant="outline" class="flex-shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-bold" :class="historyStatusTone(item).badge">
+                                    <Badge variant="outline" class="flex-shrink-0 rounded-full border border-wims-border bg-transparent px-2.5 py-0.5 text-[10px] font-bold text-slate-600 dark:text-slate-300">
                                         {{ item.label ?? item.status }}
                                     </Badge>
                                 </div>
                             </div>
-                            <div v-else class="mt-5 flex flex-col items-center rounded-xl border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-4 py-8 text-center">
+                            <div v-else class="mt-5 flex flex-col items-center bg-slate-50/80 dark:bg-slate-800/40 px-4 py-8 text-center">
                                 <div class="flex size-11 items-center justify-center rounded-full bg-slate-200/80 dark:bg-slate-700/50 mb-2.5">
                                     <CalendarDays class="size-5 text-slate-400 dark:text-slate-500" />
                                 </div>

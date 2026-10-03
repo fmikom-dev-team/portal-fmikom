@@ -75,8 +75,15 @@ class MonitoringRegistrationResolverService
         PerusahaanMitra $company,
         int $mahasiswaId,
         string $date,
+        ?int $pendaftaranId = null,
     ): ?PendaftaranMagang {
         $baseQuery = $this->authorizedCompanyQuery($company, $mahasiswaId);
+
+        if ($pendaftaranId) {
+            return (clone $baseQuery)
+                ->whereKey($pendaftaranId)
+                ->first();
+        }
 
         return $this->resolveByDate($baseQuery, $date);
     }
@@ -104,6 +111,7 @@ class MonitoringRegistrationResolverService
         return $carbonDate->toDateString();
     }
 
+    /** @param Builder<PendaftaranMagang> $baseQuery */
     private function resolveByDate(Builder $baseQuery, string $date): ?PendaftaranMagang
     {
         // Monitoring lebih dulu mencari penempatan yang benar-benar aktif pada
@@ -139,6 +147,7 @@ class MonitoringRegistrationResolverService
             ->first();
     }
 
+    /** @return Builder<PendaftaranMagang> */
     private function authorizedLecturerQuery(User $currentUser, int $mahasiswaId): Builder
     {
         return PendaftaranMagang::query()
@@ -149,6 +158,7 @@ class MonitoringRegistrationResolverService
             ->where('dosen_pembimbing_id', $currentUser->id);
     }
 
+    /** @return Builder<PendaftaranMagang> */
     private function authorizedCompanyQuery(PerusahaanMitra $company, int $mahasiswaId): Builder
     {
         return PendaftaranMagang::query()

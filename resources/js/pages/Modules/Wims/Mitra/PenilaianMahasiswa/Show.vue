@@ -129,7 +129,9 @@ const submitForm = (action: 'draft' | 'submitted') => {
 
 const goBack = () => {
     if (returnSource.value === 'monitoring' && props.student.mahasiswa_id) {
-        router.visit(`/wims/mitra/monitoring/${props.student.mahasiswa_id}`);
+        router.visit(
+            `/wims/mitra/monitoring/${props.student.mahasiswa_id}?pendaftaran=${props.student.pendaftaran_id}`,
+        );
         return;
     }
 

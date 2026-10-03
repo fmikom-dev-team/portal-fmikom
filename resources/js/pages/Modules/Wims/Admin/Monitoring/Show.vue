@@ -377,6 +377,32 @@ const formatDateTime = (value?: string | null) => {
                             <p class="mt-3 text-sm text-slate-600">
                                 {{ item.keterangan || 'Tidak ada keterangan tambahan.' }}
                             </p>
+                            <div
+                                v-if="
+                                    item.check_in_photo_url ||
+                                    item.check_out_photo_url
+                                "
+                                class="mt-3 flex flex-wrap gap-3"
+                            >
+                                <a
+                                    v-if="item.check_in_photo_url"
+                                    :href="item.check_in_photo_url"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    class="text-xs font-bold text-blue-600 hover:text-blue-700"
+                                >
+                                    Foto masuk
+                                </a>
+                                <a
+                                    v-if="item.check_out_photo_url"
+                                    :href="item.check_out_photo_url"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    class="text-xs font-bold text-blue-600 hover:text-blue-700"
+                                >
+                                    Foto pulang
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </CardContent>
@@ -416,7 +442,6 @@ const formatDateTime = (value?: string | null) => {
         </div>
     </div>
 </template>
-
 
 
 

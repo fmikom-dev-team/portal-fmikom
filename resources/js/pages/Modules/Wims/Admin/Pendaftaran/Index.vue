@@ -143,6 +143,9 @@ const search = ref(props.filters.search || '');
 const processingId = ref<number | null>(null);
 const bulkProcessing = ref(false);
 const selectedIds = ref<number[]>([]);
+const approvalDialogOpen = ref(false);
+const approvalTarget = ref<RegistrationItem | null>(null);
+const bulkApprovalDialogOpen = ref(false);
 const revisionDialogOpen = ref(false);
 const revisionTarget = ref<RegistrationItem | null>(null);
 const revisionNote = ref('');
@@ -316,10 +319,11 @@ const bulkApproveSelected = () => {
         return;
     }
 
-    if (
-        typeof window !== 'undefined' &&
-        !window.confirm(`Setujui ${selectedIds.value.length} pendaftaran terpilih?`)
-    ) {
+    bulkApprovalDialogOpen.value = true;
+};
+
+const submitBulkApproval = () => {
+    if (!selectedIds.value.length) {
         return;
     }
 
@@ -335,6 +339,7 @@ const bulkApproveSelected = () => {
             preserveState: true,
             onSuccess: () => {
                 clearSelection();
+                bulkApprovalDialogOpen.value = false;
             },
             onFinish: () => {
                 bulkProcessing.value = false;
@@ -369,16 +374,31 @@ const updateStatus = (
         return;
     }
 
+    approvalTarget.value = item;
+    approvalDialogOpen.value = true;
+};
+
+const submitApproval = () => {
+    const item = approvalTarget.value;
+
+    if (!item) {
+        return;
+    }
+
     processingId.value = item.id;
 
     router.patch(
         wimsRoutes.admin.registrations.updateStatus(item.id).url,
         {
-            status: nextStatus,
+            status: 'approved',
         },
         {
             preserveScroll: true,
             preserveState: true,
+            onSuccess: () => {
+                approvalDialogOpen.value = false;
+                approvalTarget.value = null;
+            },
             onFinish: () => {
                 processingId.value = null;
             },
@@ -927,6 +947,86 @@ const placementLink = (item: RegistrationItem) =>
 
                 <DialogFooter>
                     <Button type="button" variant="outline" class="h-10 rounded-lg border-zinc-200 text-sm font-bold text-zinc-700" @click="detailDialogOpen = false">Tutup</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        <Dialog v-model:open="approvalDialogOpen">
+            <DialogContent class="sm:max-w-md">
+                <DialogHeader class="space-y-1.5 text-left">
+                    <DialogTitle class="text-[15px] font-bold text-slate-950">
+                        Setujui pendaftaran?
+                    </DialogTitle>
+                    <DialogDescription class="text-sm leading-6 text-slate-600">
+                        Pendaftaran akan diteruskan ke tahap penempatan.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div
+                    v-if="approvalTarget"
+                    class="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-900"
+                >
+                    <p class="font-bold">
+                        {{ approvalTarget.student?.name || '-' }}
+                    </p>
+                    <p class="mt-1 text-xs text-emerald-800">
+                        {{
+                            approvalTarget.company?.proposal?.name ||
+                            approvalTarget.company?.final?.name ||
+                            'Tanpa usulan perusahaan'
+                        }}
+                    </p>
+                </div>
+
+                <DialogFooter class="gap-2">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        class="h-10 rounded-lg border-zinc-200 text-sm font-bold text-zinc-700"
+                        @click="approvalDialogOpen = false"
+                    >
+                        Batal
+                    </Button>
+                    <Button
+                        type="button"
+                        class="h-10 rounded-lg bg-emerald-600 text-sm font-bold text-white hover:bg-emerald-700"
+                        :disabled="processingId !== null"
+                        @click="submitApproval"
+                    >
+                        Ya, Setujui
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        <Dialog v-model:open="bulkApprovalDialogOpen">
+            <DialogContent class="sm:max-w-md">
+                <DialogHeader class="space-y-1.5 text-left">
+                    <DialogTitle class="text-[15px] font-bold text-slate-950">
+                        Setujui pendaftaran terpilih?
+                    </DialogTitle>
+                    <DialogDescription class="text-sm leading-6 text-slate-600">
+                        {{ selectedIds.length }} pendaftaran akan disetujui.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <DialogFooter class="gap-2">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        class="h-10 rounded-lg border-zinc-200 text-sm font-bold text-zinc-700"
+                        @click="bulkApprovalDialogOpen = false"
+                    >
+                        Batal
+                    </Button>
+                    <Button
+                        type="button"
+                        class="h-10 rounded-lg bg-emerald-600 text-sm font-bold text-white hover:bg-emerald-700"
+                        :disabled="!selectedIds.length || bulkProcessing"
+                        @click="submitBulkApproval"
+                    >
+                        Ya, Setujui
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

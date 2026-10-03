@@ -2,7 +2,6 @@
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import {
     AlertCircle,
-    Building2,
     Camera,
     CheckCircle2,
     Clock3,
@@ -114,11 +113,13 @@ const locationAccuracy = ref<number | null>(null);
 const cameraState = ref<'idle' | 'loading' | 'ready' | 'error'>('idle');
 const cameraError = ref('');
 const cameraStream = ref<MediaStream | null>(null);
+const cameraFacingMode = ref<'user' | 'environment' | null>(null);
 const cameraFrameReady = ref(false);
 const cameraRequestId = ref(0);
 const locationRequestId = ref(0);
-const verificationTimeoutId = ref<number | null>(null);
-const verificationTimeoutMs = 20000;
+const locationWatchId = ref<number | null>(null);
+const locationRetryTimeoutId = ref<number | null>(null);
+const locationWatchTimeoutMs = 10000;
 const maxPhotoSizeBytes = 5 * 1024 * 1024;
 const maxPhotoSizeLabel = '5 MB';
 const absencePanelOpen = ref(false);
@@ -454,6 +455,10 @@ const verificationSummaryMessage = computed(() => {
         return cameraError.value;
     }
 
+    if (locationState.value === 'loading' && locationError.value) {
+        return locationError.value;
+    }
+
     if (isOutsideAttendanceArea.value) {
         return 'Anda berada di luar radius presensi. Dekati lokasi magang agar verifikasi lengkap.';
     }
@@ -638,6 +643,7 @@ const revokePreview = () => {
 const stopCamera = () => {
     cameraStream.value?.getTracks().forEach((track) => track.stop());
     cameraStream.value = null;
+    cameraFacingMode.value = null;
 
     if (videoPreview.value) {
         videoPreview.value.srcObject = null;
@@ -645,6 +651,18 @@ const stopCamera = () => {
 
     if (cameraState.value !== 'error') {
         cameraState.value = 'idle';
+    }
+};
+
+const stopLocationWatch = () => {
+    if (locationWatchId.value !== null) {
+        navigator.geolocation.clearWatch(locationWatchId.value);
+        locationWatchId.value = null;
+    }
+
+    if (locationRetryTimeoutId.value !== null) {
+        window.clearTimeout(locationRetryTimeoutId.value);
+        locationRetryTimeoutId.value = null;
     }
 };
 
@@ -672,6 +690,7 @@ const clearVerificationSession = () => {
     cameraRequestId.value += 1;
     locationRequestId.value += 1;
     stopCamera();
+    stopLocationWatch();
     cameraError.value = '';
     locationError.value = '';
     locationState.value = 'idle';
@@ -684,6 +703,8 @@ const clearVerificationSession = () => {
 const isMobileDevice = () =>
     /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 
+const isFrontCamera = computed(() => cameraFacingMode.value === 'user');
+
 const createCameraConstraints = (
     deviceId?: string,
 ): MediaStreamConstraints => ({
@@ -693,7 +714,8 @@ const createCameraConstraints = (
                   exact: deviceId,
               },
               width: { ideal: 1280 },
-              height: { ideal: 720 },
+              height: { ideal: 960 },
+              aspectRatio: { ideal: 4 / 3 },
           }
         : isMobileDevice()
           ? {
@@ -701,11 +723,13 @@ const createCameraConstraints = (
                     ideal: 'user',
                 },
                 width: { ideal: 1280 },
-                height: { ideal: 720 },
+                height: { ideal: 960 },
+                aspectRatio: { ideal: 4 / 3 },
             }
           : {
                 width: { ideal: 1280 },
-                height: { ideal: 720 },
+                height: { ideal: 960 },
+                aspectRatio: { ideal: 4 / 3 },
             },
     audio: false,
 });
@@ -913,6 +937,7 @@ const createStampedPhotoFile = async (
     width: number,
     height: number,
     filename: string,
+    mirrorSource = false,
 ) => {
     const maxDimension = 1600;
     const scale = Math.min(1, maxDimension / Math.max(width, height));
@@ -929,7 +954,13 @@ const createStampedPhotoFile = async (
         throw new Error('Gagal memproses hasil kamera.');
     }
 
+    if (mirrorSource) {
+        context.translate(outputWidth, 0);
+        context.scale(-1, 1);
+    }
+
     context.drawImage(source, 0, 0, outputWidth, outputHeight);
+    context.setTransform(1, 0, 0, 1, 0, 0);
 
     const capturedAt = new Date(currentTime.value.getTime());
     const stampLines = getPhotoStampLines(capturedAt);
@@ -978,6 +1009,32 @@ const createStampedPhotoFile = async (
     });
 };
 
+const getCameraErrorMessage = (error: unknown) => {
+    const name = error instanceof DOMException ? error.name : '';
+
+    if (name === 'NotAllowedError' || name === 'SecurityError') {
+        return 'Izin kamera belum tersedia. Izinkan kamera pada browser, lalu coba lagi.';
+    }
+
+    if (name === 'NotFoundError') {
+        return 'Kamera tidak ditemukan. Pastikan perangkat memiliki kamera yang dapat digunakan.';
+    }
+
+    if (name === 'NotReadableError' || name === 'TrackStartError') {
+        return 'Kamera sedang digunakan aplikasi atau tab lain. Tutup penggunaan lain, lalu coba lagi.';
+    }
+
+    if (name === 'OverconstrainedError') {
+        return 'Kamera yang dipilih tidak dapat digunakan. Coba lagi agar sistem memilih kamera lain.';
+    }
+
+    if (name === 'AbortError') {
+        return 'Koneksi kamera terputus sebelum siap. Coba lagi.';
+    }
+
+    return 'Kamera belum mengirim frame video. Pastikan kamera tersedia, lalu coba lagi.';
+};
+
 const openCamera = async () => {
     if (!navigator.mediaDevices?.getUserMedia) {
         cameraState.value = 'error';
@@ -998,7 +1055,9 @@ const openCamera = async () => {
         await nextTick();
 
         let stream = await connectCameraStream();
-        const preferredCameraId = await getPreferredCameraId();
+        const preferredCameraId = isMobileDevice()
+            ? ''
+            : await getPreferredCameraId();
         const activeDeviceId = stream
             .getVideoTracks()[0]
             ?.getSettings().deviceId;
@@ -1015,18 +1074,24 @@ const openCamera = async () => {
         }
 
         cameraStream.value = stream;
+        const facingMode = stream.getVideoTracks()[0]?.getSettings().facingMode;
+        cameraFacingMode.value =
+            facingMode === 'user' || facingMode === 'environment'
+                ? facingMode
+                : isMobileDevice()
+                  ? 'user'
+                  : null;
 
         cameraState.value = 'ready';
 
         return true;
-    } catch {
+    } catch (error) {
         if (requestId !== cameraRequestId.value) {
             return false;
         }
 
         cameraState.value = 'error';
-        cameraError.value =
-            'Kamera belum mengirim frame video ke halaman. Coba buka kamera lagi; sistem akan reconnect otomatis ke device yang tersedia.';
+        cameraError.value = getCameraErrorMessage(error);
 
         return false;
     }
@@ -1058,6 +1123,7 @@ const capturePhoto = async () => {
             video.videoWidth,
             video.videoHeight,
             `absensi-${Date.now()}.jpg`,
+            isFrontCamera.value,
         );
 
         setPhotoFile(file);
@@ -1071,152 +1137,115 @@ const capturePhoto = async () => {
     }
 };
 
-const getLocation = () =>
-    new Promise<boolean>((resolve) => {
-        const requestId = ++locationRequestId.value;
+const startLocationWatch = () => {
+    const requestId = ++locationRequestId.value;
+    let retryCount = 0;
 
-        if (!navigator.geolocation) {
-            locationState.value = 'error';
-            locationError.value =
-                'Browser ini tidak mendukung pengambilan lokasi.';
+    if (!navigator.geolocation) {
+        locationState.value = 'error';
+        locationError.value =
+            'Browser ini tidak mendukung pengambilan lokasi.';
 
-            resolve(false);
+        return;
+    }
 
+    stopLocationWatch();
+    locationState.value = 'loading';
+    locationError.value = '';
+    locationAccuracy.value = null;
+    form.latitude = null;
+    form.longitude = null;
+
+    const setLocationError = (message: string, resetAccuracy = true) => {
+        if (requestId !== locationRequestId.value) {
             return;
         }
 
-        locationState.value = 'loading';
-        locationError.value = '';
-        locationAccuracy.value = null;
+        stopLocationWatch();
+        form.latitude = null;
+        form.longitude = null;
 
-        // Geolocation API hanya dijalankan setelah browser memberi izin akses lokasi.
-        const requestPosition = () =>
-            new Promise<GeolocationPosition>(
-                (positionResolve, positionReject) => {
-                    navigator.geolocation.getCurrentPosition(
-                        positionResolve,
-                        positionReject,
-                        {
-                            enableHighAccuracy: true,
-                            timeout: 15000,
-                            maximumAge: 0,
-                        },
-                    );
-                },
-            );
+        if (resetAccuracy) {
+            locationAccuracy.value = null;
+        }
 
-        const setLocationError = (message: string, resetAccuracy = true) => {
-            if (requestId !== locationRequestId.value) {
-                resolve(false);
+        locationState.value = 'error';
+        locationError.value = message;
+    };
 
-                return;
-            }
+    const startWatching = () => {
+        if (requestId !== locationRequestId.value) {
+            return;
+        }
 
-            form.latitude = null;
-            form.longitude = null;
-
-            if (resetAccuracy) {
-                locationAccuracy.value = null;
-            }
-
-            locationState.value = 'error';
-            locationError.value = message;
-            resolve(false);
-        };
-
-        const attempts = Array.from({ length: 3 }, () => requestPosition());
-
-        Promise.allSettled(attempts)
-            .then((results) => {
+        locationWatchId.value = navigator.geolocation.watchPosition(
+            (position) => {
                 if (requestId !== locationRequestId.value) {
-                    resolve(false);
-
                     return;
                 }
 
-                const fulfilled = results
-                    .filter(
-                        (
-                            result,
-                        ): result is PromiseFulfilledResult<GeolocationPosition> =>
-                            result.status === 'fulfilled',
-                    )
-                    .map((result) => result.value);
-
-                if (!fulfilled.length) {
-                    const firstRejected = results.find(
-                        (result): result is PromiseRejectedResult =>
-                            result.status === 'rejected',
-                    );
-                    const reason = firstRejected?.reason as
-                        | GeolocationPositionError
-                        | undefined;
-                    const reasonCode = reason?.code;
-
-                    if (reasonCode === 1) {
-                        setLocationError(
-                            'Izin lokasi ditolak. Aktifkan lokasi lalu coba lagi.',
-                        );
-
-                        return;
-                    }
-
-                    if (reasonCode === 2) {
-                        setLocationError(
-                            'Lokasi tidak tersedia. Pastikan GPS aktif.',
-                        );
-
-                        return;
-                    }
-
-                    if (reasonCode === 3) {
-                        setLocationError(
-                            'Pengambilan lokasi terlalu lama. Coba sekali lagi.',
-                        );
-
-                        return;
-                    }
-
-                    setLocationError(
-                        'Terjadi kendala saat mengambil lokasi Anda.',
-                    );
-
-                    return;
-                }
-
-                // Beberapa pembacaan GPS dicoba sekaligus lalu dipilih yang paling akurat
-                // agar koordinat yang dikirim tidak sekadar bergantung pada sampel pertama.
-                const bestPosition = fulfilled.reduce((best, current) =>
-                    current.coords.accuracy < best.coords.accuracy
-                        ? current
-                        : best,
-                );
-
-                locationAccuracy.value = bestPosition.coords.accuracy;
+                locationAccuracy.value = position.coords.accuracy;
 
                 if (
-                    bestPosition.coords.accuracy >
+                    position.coords.accuracy >
                     locationAccuracyThreshold.value
                 ) {
+                    locationState.value = 'loading';
+                    locationError.value = `GPS sedang meningkatkan akurasi (±${Math.round(position.coords.accuracy)} m).`;
+
+                    return;
+                }
+
+                form.latitude = Number(position.coords.latitude.toFixed(6));
+                form.longitude = Number(position.coords.longitude.toFixed(6));
+                locationState.value = 'success';
+                locationError.value = '';
+                stopLocationWatch();
+            },
+            (error) => {
+                if (requestId !== locationRequestId.value) {
+                    return;
+                }
+
+                stopLocationWatch();
+
+                if (error.code === error.PERMISSION_DENIED) {
                     setLocationError(
-                        `Akurasi GPS perangkat masih terlalu lemah (${Math.round(bestPosition.coords.accuracy)} m). Coba pindah ke area terbuka atau gunakan HP agar lokasi tidak meleset jauh.`,
-                        false,
+                        'Izin lokasi ditolak. Aktifkan lokasi lalu coba lagi.',
                     );
 
                     return;
                 }
 
-                form.latitude = Number(bestPosition.coords.latitude.toFixed(6));
-                form.longitude = Number(
-                    bestPosition.coords.longitude.toFixed(6),
+                if (retryCount < 1) {
+                    retryCount += 1;
+                    locationState.value = 'loading';
+                    locationError.value =
+                        'GPS belum siap. Sistem mencoba menghubungkan ulang lokasi.';
+                    locationRetryTimeoutId.value = window.setTimeout(() => {
+                        locationRetryTimeoutId.value = null;
+                        startWatching();
+                    }, 800);
+
+                    return;
+                }
+
+                setLocationError(
+                    error.code === error.TIMEOUT
+                        ? 'Pengambilan lokasi terlalu lama. Pastikan GPS aktif dan coba lagi.'
+                        : 'Lokasi tidak tersedia. Pastikan GPS aktif dan coba lagi.',
                 );
-                locationState.value = 'success';
-                resolve(true);
-            })
-            .catch(() => {
-                setLocationError('Terjadi kendala saat mengambil lokasi Anda.');
-            });
-    });
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: locationWatchTimeoutMs,
+                maximumAge: 0,
+            },
+        );
+    };
+
+    startWatching();
+};
 
 const startVerification = async () => {
     if (isVerificationLoading.value || form.processing) {
@@ -1226,25 +1255,8 @@ const startVerification = async () => {
     clearVerificationSession();
     form.clearErrors('photo');
 
-    const timeoutId = window.setTimeout(() => {
-        cameraRequestId.value += 1;
-        locationRequestId.value += 1;
-        stopCamera();
-        locationState.value = 'error';
-        locationError.value = 'Pengambilan lokasi terlalu lama. Periksa izin browser atau GPS, lalu coba lagi.';
-        cameraState.value = 'error';
-        cameraError.value = 'Verifikasi terlalu lama. Pastikan izin kamera sudah diberikan, lalu coba lagi.';
-    }, verificationTimeoutMs);
-    verificationTimeoutId.value = timeoutId;
-
-    try {
-        await Promise.all([getLocation(), openCamera()]);
-    } finally {
-        if (verificationTimeoutId.value === timeoutId) {
-            window.clearTimeout(timeoutId);
-            verificationTimeoutId.value = null;
-        }
-    }
+    startLocationWatch();
+    await openCamera();
 };
 
 const submit = () => {
@@ -1270,9 +1282,7 @@ onBeforeUnmount(() => {
     stopCamera();
     revokePreview();
 
-    if (verificationTimeoutId.value) {
-        window.clearTimeout(verificationTimeoutId.value);
-    }
+    stopLocationWatch();
 });
 </script>
 
@@ -1375,7 +1385,7 @@ onBeforeUnmount(() => {
                                 </div>
                                 <div>
                                     <p class="text-[15px] font-bold text-wims-text">Presensi Hari Ini</p>
-                                    <p class="text-[11px] text-slate-500 dark:text-slate-400">Verifikasi lokasi & foto, lalu check-in/out</p>
+                                    <p class="text-[11px] text-slate-500 dark:text-slate-400">Radius presensi {{ attendance.radius ? `${attendance.radius} m` : '-' }}</p>
                                 </div>
                             </div>
                         </div>
@@ -1389,13 +1399,26 @@ onBeforeUnmount(() => {
                         </div>
 
                         <!-- Camera / Photo preview area -->
-                        <div class="rounded-xl border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 p-3">
-                            <div v-if="previewUrl" class="overflow-hidden rounded-lg border border-wims-border/60 bg-slate-100 dark:bg-slate-700/50">
-                                <img :src="previewUrl" alt="Preview foto absensi" class="max-h-[200px] w-full object-cover" />
+                        <div
+                            :class="
+                                previewUrl
+                                    ? ''
+                                    : 'rounded-xl border border-wims-border/60 bg-slate-50/80 p-3 dark:bg-slate-800/40'
+                            "
+                        >
+                            <div v-if="previewUrl" class="aspect-square w-full max-w-[400px] mx-auto overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800">
+                                <img :src="previewUrl" alt="Preview foto absensi" class="size-full object-contain" />
                             </div>
                             <div v-else-if="cameraState === 'loading' || cameraState === 'ready'" class="space-y-2.5">
                                 <div class="overflow-hidden rounded-lg border border-wims-border/60 bg-slate-950 shadow-inner">
-                                    <video ref="videoPreview" autoplay muted playsinline class="max-h-[200px] w-full object-cover" />
+                                    <video
+                                        ref="videoPreview"
+                                        autoplay
+                                        muted
+                                        playsinline
+                                        class="max-h-[240px] w-full object-contain"
+                                        :class="isFrontCamera ? '-scale-x-100' : ''"
+                                    />
                                 </div>
                                 <p v-if="locationValidationState === 'outside'" class="rounded-lg border border-rose-200/60 bg-rose-50 dark:border-rose-500/30 dark:bg-rose-500/10 px-3 py-2 text-[10px] leading-relaxed text-rose-700 dark:text-rose-300">
                                     Preview kamera aktif, foto hanya bisa diambil saat posisi masuk radius presensi.
@@ -1552,33 +1575,6 @@ onBeforeUnmount(() => {
                             </Button>
                         </div>
                     </div>
-
-                    <!-- Informasi Lokasi Card -->
-                    <div class="order-1 rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-300 hover:shadow-[0_8px_24px_-8px_rgba(0,0,0,0.06)] xl:order-none">
-                        <div class="p-5 sm:p-6">
-                            <div class="flex items-center gap-3">
-                                <div class="flex size-10 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
-                                    <Building2 class="size-5" />
-                                </div>
-                                <div>
-                                    <p class="text-sm font-bold text-wims-text sm:text-[15px]">Informasi Lokasi</p>
-                                    <p class="text-[11px] text-slate-500 dark:text-slate-400 sm:text-xs">Data perusahaan & radius</p>
-                                </div>
-                            </div>
-
-                            <div class="mt-4 space-y-2.5">
-                                <div class="rounded-xl border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-4 py-3">
-                                    <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Perusahaan</p>
-                                    <p class="mt-1.5 text-[13px] font-bold text-wims-text leading-tight">{{ attendance.company?.name || 'Belum ada perusahaan' }}</p>
-                                </div>
-                                <div class="rounded-xl border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-4 py-3">
-                                    <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Radius presensi</p>
-                                    <p class="mt-1.5 text-[13px] font-bold text-wims-text">{{ attendance.radius ? `${attendance.radius}m` : '-' }}</p>
-                                </div>
-
-                            </div>
-                        </div>
-                    </div>
                 </aside>
             </div>
 
@@ -1700,5 +1696,3 @@ onBeforeUnmount(() => {
         </div>
     </div>
 </template>
-
-
