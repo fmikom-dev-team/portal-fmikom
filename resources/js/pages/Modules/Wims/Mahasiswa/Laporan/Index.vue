@@ -21,7 +21,6 @@ import {
     FileText,
     NotebookPen,
     Star,
-    TrendingUp,
     Upload,
     User,
     X,
@@ -289,46 +288,7 @@ const evaluationStatusClasses = computed(() => {
     return 'border-wims-border bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400';
 });
 
-// --- FITUR 1: Timeline Steps --------------------------------------------------
-const timelineSteps = computed(() => [
-    {
-        key: 'registered',
-        label: 'Pendaftaran',
-        desc: 'Pengajuan PKL dikirim',
-        done: props.pageState !== 'not_registered',
-        active: props.pageState === 'waiting',
-    },
-    {
-        key: 'approved',
-        label: 'Disetujui',
-        desc: 'Penempatan dikonfirmasi',
-        done: props.pageState === 'active' || props.pageState === 'completed',
-        active: false,
-    },
-    {
-        key: 'active',
-        label: 'PKL Aktif',
-        desc: 'Magang sedang berjalan',
-        done: props.pageState === 'completed',
-        active: props.pageState === 'active',
-    },
-    {
-        key: 'laporan',
-        label: 'Laporan Akhir',
-        desc: 'Unggah dokumen laporan',
-        done: props.pageState === 'completed' && Boolean(props.registration?.laporan_akhir),
-        active: props.pageState === 'completed' && !props.registration?.laporan_akhir,
-    },
-    {
-        key: 'penilaian',
-        label: 'Penilaian',
-        desc: 'Dosen dan mitra mengirim nilai',
-        done: Boolean(props.evaluation?.is_complete),
-        active: ['final_dosen', 'final_mitra', 'draft'].includes(evaluationStatusKey.value),
-    },
-]);
-
-// --- FITUR 2: Checklist Kelengkapan -------------------------------------------
+// --- Checklist Kelengkapan -----------------------------------------------------
 const checklistItems = computed(() => [
     {
         label: 'Dosen pembimbing sudah ditetapkan',
@@ -670,58 +630,6 @@ const completionScore = computed(() => {
                 </div>
             </div>
 
-            <!-- Timeline Status PKL -->
-            <div class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-blue-200/40 dark:border-blue-500/20 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-                <div class="border-b border-wims-border/50 px-5 py-4 sm:px-6">
-                    <div class="flex items-center gap-3">
-                        <div class="flex size-9 items-center justify-center rounded-xl bg-violet-50 dark:bg-violet-500/15 text-violet-600 dark:text-violet-400">
-                            <TrendingUp class="size-4" />
-                        </div>
-                        <div>
-                            <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Alur Proses</p>
-                            <p class="text-sm font-bold text-wims-text">Timeline Status PKL</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="px-5 py-5 sm:px-6">
-                    <div class="relative overflow-x-auto">
-                        <div class="flex min-w-max flex-row items-start justify-between gap-0 sm:min-w-0">
-                            <template v-for="(step, idx) in timelineSteps" :key="step.key">
-                                <div class="flex flex-col items-center gap-2" style="min-width:80px;">
-                                    <div
-                                        class="flex size-10 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-300"
-                                        :class="
-                                            step.done
-                                                ? 'border-emerald-500 bg-emerald-500 text-white shadow-md shadow-emerald-500/30'
-                                                : step.active
-                                                  ? 'border-blue-500 bg-wims-card text-blue-600 dark:text-blue-400 shadow-[0_0_0_3px_rgba(59,130,246,0.15)]'
-                                                  : 'border-wims-border/60 bg-wims-card text-slate-400 dark:text-slate-500'
-                                        "
-                                    >
-                                        <CheckCircle2 v-if="step.done" class="size-5" />
-                                        <span v-else class="text-xs font-bold">{{ idx + 1 }}</span>
-                                    </div>
-                                    <div class="text-center">
-                                        <p
-                                            class="text-xs font-bold"
-                                            :class="step.done ? 'text-emerald-700 dark:text-emerald-300' : step.active ? 'text-wims-text' : 'text-slate-400 dark:text-slate-500'"
-                                        >
-                                            {{ step.label }}
-                                        </p>
-                                        <p class="mt-0.5 text-[10px] leading-4 text-slate-400 dark:text-slate-500">{{ step.desc }}</p>
-                                    </div>
-                                </div>
-                                <div
-                                    v-if="idx < timelineSteps.length - 1"
-                                    class="mt-5 h-px flex-1 min-w-[20px]"
-                                    :class="timelineSteps[idx + 1].done || timelineSteps[idx + 1].active ? 'bg-emerald-300 dark:bg-emerald-500/40' : 'bg-slate-200 dark:bg-slate-700/50'"
-                                />
-                            </template>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- NEW ELEMENT: PKL Completion Score -->
             <div v-if="props.pageState === 'active' || props.pageState === 'completed'" class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-blue-200/40 dark:border-blue-500/20 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
                 <div class="px-5 py-5 sm:px-6">
@@ -796,14 +704,14 @@ const completionScore = computed(() => {
                                     {{ statusLabel }}
                                 </span>
                             </div>
-                            <div class="grid gap-2.5 sm:grid-cols-2">
-                                <div class="rounded-xl border border-wims-border/50 bg-slate-50/80 dark:bg-slate-800/30 px-4 py-3">
+                            <div class="grid gap-4 sm:grid-cols-2">
+                                <div class="border-l-2 border-blue-200 pl-3 dark:border-blue-500/30">
                                     <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Usulan Perusahaan</p>
                                     <p class="mt-1.5 text-sm font-bold text-wims-text">
                                         {{ proposalCompanyLabel }}
                                     </p>
                                 </div>
-                                <div class="rounded-xl border border-wims-border/50 bg-slate-50/80 dark:bg-slate-800/30 px-4 py-3">
+                                <div class="border-l-2 border-violet-200 pl-3 dark:border-violet-500/30">
                                     <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Periode PKL</p>
                                     <p class="mt-1.5 text-sm font-bold text-wims-text">
                                         {{ props.registration?.period_label || 'Belum tersedia' }}
@@ -876,14 +784,14 @@ const completionScore = computed(() => {
                                 </div>
                             </div>
 
-                            <div class="grid gap-2.5 sm:grid-cols-2">
-                                <div class="rounded-xl border border-wims-border/50 bg-slate-50/80 dark:bg-slate-800/30 px-4 py-3">
+                            <div class="grid gap-4 sm:grid-cols-2">
+                                <div class="border-l-2 border-blue-200 pl-3 dark:border-blue-500/30">
                                     <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Perusahaan Final</p>
                                     <p class="mt-1.5 break-words text-sm font-bold text-wims-text">
                                         {{ currentCompanyLabel }}
                                     </p>
                                 </div>
-                                <div class="rounded-xl border border-wims-border/50 bg-slate-50/80 dark:bg-slate-800/30 px-4 py-3">
+                                <div class="border-l-2 border-violet-200 pl-3 dark:border-violet-500/30">
                                     <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Periode PKL</p>
                                     <p class="mt-1.5 break-words text-sm font-bold text-wims-text">
                                         {{ props.registration?.period_label || 'Belum tersedia' }}
@@ -894,13 +802,13 @@ const completionScore = computed(() => {
 
 
                             <!-- File Upload Section -->
-                            <div class="rounded-xl border border-wims-border/50 bg-slate-50/80 dark:bg-slate-800/30 px-4 py-4">
+                            <div class="border-t border-wims-border/50 pt-4">
                                 <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Dokumen Laporan Akhir</p>
 
                                 <!-- Sudah ada file tersimpan -->
                                 <div
                                     v-if="props.registration?.laporan_akhir"
-                                    class="mt-3 rounded-xl border border-wims-border/50 bg-wims-card px-4 py-3.5"
+                                    class="mt-3 py-3.5"
                                 >
                                     <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
                                         <div class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
@@ -920,7 +828,7 @@ const completionScore = computed(() => {
                                                 :href="props.registration.laporan_akhir.view_url"
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                class="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-wims-border/60 bg-wims-card px-3 py-2 text-center text-xs font-bold text-slate-700 transition hover:border-blue-300 hover:text-blue-600 dark:text-slate-300 sm:w-auto"
+                                            class="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-slate-100 px-3 py-2 text-center text-xs font-bold text-slate-700 transition hover:bg-blue-50 hover:text-blue-600 dark:bg-slate-800/50 dark:text-slate-300 dark:hover:bg-blue-500/10 sm:w-auto"
                                             >
                                                 Lihat Dokumen
                                             </a>
@@ -1024,8 +932,8 @@ const completionScore = computed(() => {
                                 </div>
                             </div>
                         </div>
-                        <div class="space-y-3 px-5 py-4 sm:px-6">
-                            <div v-if="hasCurrentPeriodHistoryDownload || attendanceHistory.length" class="rounded-xl border border-wims-border/50 bg-slate-50/80 dark:bg-slate-800/30 px-4 py-3.5">
+                        <div class="divide-y divide-wims-border/50 px-5 sm:px-6">
+                            <div v-if="hasCurrentPeriodHistoryDownload || attendanceHistory.length" class="py-4">
                                 <div class="flex items-start justify-between gap-3">
                                     <div class="min-w-0 flex-1">
                                         <p class="text-sm font-bold text-wims-text">Riwayat Presensi</p>
@@ -1063,7 +971,7 @@ const completionScore = computed(() => {
                                 </button>
                             </div>
 
-                            <div v-if="hasCurrentPeriodLogbookDownload || logbookHistory.length" class="rounded-xl border border-wims-border/50 bg-slate-50/80 dark:bg-slate-800/30 px-4 py-3.5">
+                            <div v-if="hasCurrentPeriodLogbookDownload || logbookHistory.length" class="py-4">
                                 <div class="flex items-center justify-between gap-3">
                                     <div class="min-w-0 flex-1">
                                         <p class="text-sm font-bold text-wims-text">Logbook PKL</p>

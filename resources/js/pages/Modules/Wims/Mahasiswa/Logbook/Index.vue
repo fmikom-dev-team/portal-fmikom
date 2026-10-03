@@ -653,29 +653,7 @@ watch(
                     <!-- Aktivitas Harian -->
                     <label class="block space-y-1.5">
                         <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Deskripsi Aktivitas</span>
-                                <DropdownMenu v-if="!hasLockedTodayLogbook">
-                                    <DropdownMenuTrigger as-child>
-                                        <button
-                                            type="button"
-                                            class="flex items-center gap-1 rounded-lg border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-2 py-1 text-[11px] font-semibold text-slate-600 dark:text-slate-400 transition-colors hover:border-blue-300/60 hover:bg-blue-50 dark:hover:bg-blue-500/10"
-                                        >
-                                            <List class="size-3" />
-                                            Format
-                                            <ChevronDown class="size-3" />
-                                        </button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="start" :side-offset="5" class="min-w-40 rounded-xl border-wims-border">
-                                        <DropdownMenuItem class="gap-2 text-sm" @select="insertActivityTemplate('1. ')">
-                                            <ListOrdered class="size-4" /> Daftar Bernomor
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem class="gap-2 text-sm" @select="insertActivityTemplate('- ')">
-                                            <List class="size-4" /> Daftar Berpoin
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </div>
+                            <span class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Deskripsi Aktivitas</span>
                             <div class="flex items-center gap-2">
                                 <div class="h-1 w-14 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700/50">
                                     <div
@@ -687,6 +665,26 @@ watch(
                                 <span class="text-xs tabular-nums text-slate-400 dark:text-slate-500">{{ aktivitasLength }}/20</span>
                             </div>
                         </div>
+                        <DropdownMenu v-if="!hasLockedTodayLogbook">
+                            <DropdownMenuTrigger as-child>
+                                <button
+                                    type="button"
+                                    class="flex items-center gap-1 rounded-lg border border-wims-border/60 bg-slate-50/80 px-2 py-1 text-[11px] font-semibold text-slate-600 transition-colors hover:border-blue-300/60 hover:bg-blue-50 dark:bg-slate-800/40 dark:text-slate-400 dark:hover:bg-blue-500/10"
+                                >
+                                    <List class="size-3" />
+                                    Format
+                                    <ChevronDown class="size-3" />
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" :side-offset="5" class="min-w-40 rounded-xl border-wims-border">
+                                <DropdownMenuItem class="gap-2 text-sm" @select="insertActivityTemplate('1. ')">
+                                    <ListOrdered class="size-4" /> Daftar Bernomor
+                                </DropdownMenuItem>
+                                <DropdownMenuItem class="gap-2 text-sm" @select="insertActivityTemplate('- ')">
+                                    <List class="size-4" /> Daftar Berpoin
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                         <textarea
                             ref="aktivitasTextarea"
                             v-model="form.aktivitas_harian"
@@ -699,38 +697,13 @@ watch(
                                 ? 'border-emerald-200/60 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/10 font-medium text-wims-text'
                                 : 'border-wims-border/60 bg-wims-card text-wims-text focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10 disabled:opacity-50'"
                         />
-                        <p v-if="!hasLockedTodayLogbook" class="text-xs text-slate-400 dark:text-slate-500">
-                            Gunakan format poin jika ada lebih dari satu aktivitas.
-                        </p>
                         <p v-if="form.errors.aktivitas_harian" class="text-xs text-rose-500 dark:text-rose-400">{{ form.errors.aktivitas_harian }}</p>
                     </label>
 
                     <!-- Kompetensi -->
                     <label class="block space-y-1.5">
                         <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Kompetensi Yang Dicapai</span>
-                                <DropdownMenu v-if="!hasLockedTodayLogbook">
-                                    <DropdownMenuTrigger as-child>
-                                        <button
-                                            type="button"
-                                            class="flex items-center gap-1 rounded-lg border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-2 py-1 text-[11px] font-semibold text-slate-600 dark:text-slate-400 transition-colors hover:border-blue-300/60 hover:bg-blue-50 dark:hover:bg-blue-500/10"
-                                        >
-                                            <List class="size-3" />
-                                            Format
-                                            <ChevronDown class="size-3" />
-                                        </button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="start" :side-offset="5" class="min-w-40 rounded-xl border-wims-border">
-                                        <DropdownMenuItem class="gap-2 text-sm" @select="insertCompetencyTemplate('1. ')">
-                                            <ListOrdered class="size-4" /> Daftar Bernomor
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem class="gap-2 text-sm" @select="insertCompetencyTemplate('- ')">
-                                            <List class="size-4" /> Daftar Berpoin
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </div>
+                            <span class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Kompetensi Yang Dicapai</span>
                             <div class="flex items-center gap-2">
                                 <div class="h-1 w-14 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700/50">
                                     <div
@@ -742,6 +715,26 @@ watch(
                                 <span class="text-xs tabular-nums text-slate-400 dark:text-slate-500">{{ kompetensiLength }}/10</span>
                             </div>
                         </div>
+                        <DropdownMenu v-if="!hasLockedTodayLogbook">
+                            <DropdownMenuTrigger as-child>
+                                <button
+                                    type="button"
+                                    class="flex items-center gap-1 rounded-lg border border-wims-border/60 bg-slate-50/80 px-2 py-1 text-[11px] font-semibold text-slate-600 transition-colors hover:border-blue-300/60 hover:bg-blue-50 dark:bg-slate-800/40 dark:text-slate-400 dark:hover:bg-blue-500/10"
+                                >
+                                    <List class="size-3" />
+                                    Format
+                                    <ChevronDown class="size-3" />
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" :side-offset="5" class="min-w-40 rounded-xl border-wims-border">
+                                <DropdownMenuItem class="gap-2 text-sm" @select="insertCompetencyTemplate('1. ')">
+                                    <ListOrdered class="size-4" /> Daftar Bernomor
+                                </DropdownMenuItem>
+                                <DropdownMenuItem class="gap-2 text-sm" @select="insertCompetencyTemplate('- ')">
+                                    <List class="size-4" /> Daftar Berpoin
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                         <textarea
                             ref="kompetensiTextarea"
                             v-model="form.kompetensi_dicapai"
@@ -754,9 +747,6 @@ watch(
                                 ? 'border-emerald-200/60 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/10 font-medium text-wims-text'
                                 : 'border-wims-border/60 bg-wims-card text-wims-text focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10 disabled:opacity-50'"
                         />
-                        <p v-if="!hasLockedTodayLogbook" class="text-xs text-slate-400 dark:text-slate-500">
-                            Gunakan format poin jika ada lebih dari satu kompetensi.
-                        </p>
                         <p v-if="form.errors.kompetensi_dicapai" class="text-xs text-rose-500 dark:text-rose-400">{{ form.errors.kompetensi_dicapai }}</p>
                     </label>
 
@@ -766,7 +756,7 @@ watch(
                     <div class="space-y-2">
                         <div class="flex items-center justify-between">
                             <span class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Lampiran Foto</span>
-                            <span class="rounded-full border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-2.5 py-0.5 text-xs font-bold text-slate-500 dark:text-slate-400">
+                            <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-500 dark:bg-slate-800/40 dark:text-slate-400">
                                 {{ activePhotoCount }} / 3
                             </span>
                         </div>
@@ -780,13 +770,13 @@ watch(
                             @change="handleFileChange"
                         />
 
-                        <div class="rounded-xl border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/30 p-4">
+                        <div class="pt-1">
                             <template v-if="hasLockedTodayLogbook && !isRevisionMode && !form.photos.length">
                                 <div v-if="(displayLogbook?.photos ?? []).length" class="grid grid-cols-3 gap-3">
                                     <div
                                         v-for="(photo, i) in displayLogbook?.photos ?? []"
                                         :key="photo.id"
-                                        class="group relative aspect-square cursor-zoom-in overflow-hidden rounded-xl border border-wims-border/60 bg-wims-card"
+                                        class="group relative aspect-square cursor-zoom-in overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800/30"
                                         @click="openLightbox((displayLogbook?.photos ?? []).map(p => p.url ?? '').filter(Boolean), i)"
                                     >
                                         <img :src="photo.url ?? undefined" alt="Foto logbook" class="h-full w-full object-cover transition duration-200 group-hover:scale-105" />
@@ -803,7 +793,7 @@ watch(
                                     <div
                                         v-for="(photo, i) in displayLogbook?.photos ?? []"
                                         :key="photo.id"
-                                        class="group relative aspect-square cursor-zoom-in overflow-hidden rounded-xl border border-wims-border/60 bg-wims-card"
+                                        class="group relative aspect-square cursor-zoom-in overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800/30"
                                         @click="openLightbox((displayLogbook?.photos ?? []).map(p => p.url ?? '').filter(Boolean), i)"
                                     >
                                         <img :src="photo.url ?? undefined" alt="Foto logbook revisi" class="h-full w-full object-cover transition duration-200 group-hover:scale-105" />
@@ -822,7 +812,7 @@ watch(
                                     <div
                                         v-for="(url, i) in previewUrls"
                                         :key="`${url}-${i}`"
-                                        class="relative aspect-square overflow-hidden rounded-xl border border-wims-border/60 bg-wims-card"
+                                        class="relative aspect-square overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800/30"
                                     >
                                         <img :src="url" alt="Preview" class="h-full w-full cursor-zoom-in object-cover" @click="openLightbox(previewUrls, i)" />
                                         <button
@@ -955,7 +945,6 @@ input[type="time"] {
 .lb-enter-from,
 .lb-leave-to { opacity: 0; }
 </style>
-
 
 
 

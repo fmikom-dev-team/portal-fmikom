@@ -259,38 +259,6 @@ const copyToClipboard = async (value: string | null | undefined, field: string) 
     } catch { /* silent */ }
 };
 
-// --- FITUR 2: PROFILE COMPLETION SCORE ----------------------------------------
-
-const completionItems = computed(() => [
-    { label: 'Nama', filled: !!props.profile.name },
-    { label: 'Email', filled: !!props.profile.email },
-    { label: 'NIM', filled: !!(props.profile.nim_nip || props.profile.nomor_induk) },
-    { label: 'Program Studi', filled: !!props.profile.program_studi },
-    { label: 'Nomor Telepon', filled: !!props.profile.phone },
-    { label: 'Tanggal Lahir', filled: !!props.profile.tanggal_lahir },
-    { label: 'Bio Singkat', filled: !!props.profile.bio },
-    { label: 'Website', filled: !!props.profile.website },
-    { label: 'LinkedIn', filled: !!props.profile.linkedin },
-    { label: 'Foto Profil', filled: !!props.profile.photo_url },
-]);
-
-const completionScore = computed(() => {
-    const filled = completionItems.value.filter((i) => i.filled).length;
-    return Math.round((filled / completionItems.value.length) * 100);
-});
-
-const completionBarColor = computed(() => {
-    if (completionScore.value >= 80) return 'bg-emerald-500';
-    if (completionScore.value >= 50) return 'bg-amber-400';
-    return 'bg-rose-400';
-});
-
-const completionTextColor = computed(() => {
-    if (completionScore.value >= 80) return 'text-emerald-700 dark:text-emerald-300';
-    if (completionScore.value >= 50) return 'text-amber-700 dark:text-amber-300';
-    return 'text-rose-600 dark:text-rose-400';
-});
-
 // --- FITUR 3: INTERNSHIP PROGRESS TRACKER -------------------------------------
 
 const internshipStages = [
@@ -466,41 +434,6 @@ const handleDragLeave = () => { isDraggingOver.value = false; };
                 label="Periode aktif"
                 helper="Pilih periode PKL/Magang yang ingin dibuka."
             />
-            <!-- ----------------------------------------------------------------
-                 FITUR 2 - PROFILE COMPLETION SCORE
-                 Menampilkan persentase kelengkapan data profil mahasiswa
-                 dengan progress bar berwarna dan checklist item.
-            ----------------------------------------------------------------- -->
-            <section class="rounded-xl border border-wims-border bg-wims-card px-5 py-4 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)] sm:px-6 sm:py-5">
-                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <p class="text-sm font-semibold text-wims-text">Kelengkapan Profil</p>
-                    </div>
-                    <span class="text-2xl font-bold" :class="completionTextColor">
-                        {{ completionScore }}%
-                    </span>
-                </div>
-                <div class="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700/50">
-                    <div
-                        class="h-full rounded-full transition-all duration-700"
-                        :class="completionBarColor"
-                        :style="{ width: completionScore + '%' }"
-                    />
-                </div>
-                <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
-                    <div
-                        v-for="item in completionItems"
-                        :key="item.label"
-                        class="flex items-center gap-1.5 text-xs"
-                        :class="item.filled ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'"
-                    >
-                        <CircleCheck v-if="item.filled" class="size-3.5 shrink-0" />
-                        <AlertCircle v-else class="size-3.5 shrink-0" />
-                        {{ item.label }}
-                    </div>
-                </div>
-            </section>
-
             <!-- Main Identity Card -->
             <div class="w-full">
                 <Card class="rounded-xl border border-wims-border bg-wims-card py-0 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)]">

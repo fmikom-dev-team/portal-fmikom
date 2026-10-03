@@ -5,6 +5,7 @@ namespace App\Modules\Wims\Services\Mahasiswa\Logbook;
 use App\Models\Magang\LogbookMagang;
 use App\Models\Magang\LogbookPhoto;
 use App\Models\Magang\PendaftaranMagang;
+use App\Modules\Wims\Services\Mahasiswa\Attendance\AttendanceAvailabilityService;
 use App\Modules\Wims\Services\Mahasiswa\Period\StudentPeriodResolverService;
 use App\Support\PublicStorageUrl;
 use Illuminate\Support\Carbon;
@@ -14,6 +15,7 @@ class LogbookPageService
 {
     public function __construct(
         private readonly StudentPeriodResolverService $studentPeriodResolverService,
+        private readonly AttendanceAvailabilityService $attendanceAvailabilityService,
     ) {}
 
     public function build(int $userId, ?int $selectedRegistrationId = null): array
@@ -62,7 +64,13 @@ class LogbookPageService
 
     public function canSubmitToday(?PendaftaranMagang $pendaftaran): bool
     {
-        return $pendaftaran?->allowsDailyActivity() ?? false;
+        if (! $pendaftaran) {
+            return false;
+        }
+
+        [$isAvailable] = $this->attendanceAvailabilityService->resolveAvailability($pendaftaran);
+
+        return $isAvailable;
     }
 
     public function blockedMessage(?PendaftaranMagang $pendaftaran): string
@@ -71,14 +79,30 @@ class LogbookPageService
             return 'Data pendaftaran magang tidak ditemukan.';
         }
 
-        if (! $pendaftaran->isActivatedByAdmin()) {
-            return 'Logbook belum dibuka. Tunggu sampai admin menetapkan penempatan final dan mengaktifkan PKL/magang Anda.';
+        [, $message] = $this->attendanceAvailabilityService->resolveAvailability($pendaftaran);
+
+        return $this->formatBlockedMessage($message);
+    }
+
+    private function formatBlockedMessage(?string $message): string
+    {
+        if (blank($message)) {
+            return 'Logbook tidak dapat diisi hari ini.';
         }
 
-        $periodeMulai = $pendaftaran->tanggal_mulai?->locale('id')->translatedFormat('d M Y') ?? '-';
-        $periodeSelesai = $pendaftaran->tanggal_selesai?->locale('id')->translatedFormat('d M Y') ?? '-';
-
-        return "Logbook hanya dapat diisi sesuai periode PKL yang diajukan, yaitu {$periodeMulai} s/d {$periodeSelesai}.";
+        return str_replace(
+            [
+                'Presensi belum dibuka',
+                'Presensi hanya dapat dilakukan',
+                'sehingga presensi tidak dibuka',
+            ],
+            [
+                'Logbook belum dibuka',
+                'Logbook hanya dapat diisi',
+                'sehingga logbook tidak dapat diisi',
+            ],
+            $message,
+        );
     }
 
     public function transformLogbook(LogbookMagang $logbook): array
