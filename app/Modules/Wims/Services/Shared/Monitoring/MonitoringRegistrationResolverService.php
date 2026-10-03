@@ -12,7 +12,7 @@ class MonitoringRegistrationResolverService
 {
     public function normalizeDateInput(mixed $value): ?string
     {
-        if (!is_string($value) || trim($value) === '') {
+        if (! is_string($value) || trim($value) === '') {
             return null;
         }
 
