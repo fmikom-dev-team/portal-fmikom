@@ -18,11 +18,18 @@ class StudentRegistrationActionService
 
     public function buildPayload(array $input): array
     {
+        $metodePenempatan = $this->nullIfBlank($input['metode_penempatan'] ?? null);
+
         return [
             'tanggal_mulai' => $input['tanggal_mulai'] ?? null,
             'tanggal_selesai' => $input['tanggal_selesai'] ?? null,
-            'perusahaan_diminati_nama' => $this->nullIfBlank($input['perusahaan_diminati_nama'] ?? null),
-            'perusahaan_diminati_alamat' => $this->nullIfBlank($input['perusahaan_diminati_alamat'] ?? null),
+            'perusahaan_diminati_nama' => $metodePenempatan === 'mandiri'
+                ? $this->nullIfBlank($input['perusahaan_diminati_nama'] ?? null)
+                : null,
+            'perusahaan_diminati_alamat' => $metodePenempatan === 'mandiri'
+                ? $this->nullIfBlank($input['perusahaan_diminati_alamat'] ?? null)
+                : null,
+            'metode_penempatan' => $metodePenempatan,
             'catatan_pengajuan' => $this->nullIfBlank($input['catatan_pengajuan'] ?? null),
             'status_kip' => $this->nullIfBlank($input['status_kip'] ?? null),
             'sks_ditempuh' => $input['sks_ditempuh'] ?? null,
@@ -46,11 +53,12 @@ class StudentRegistrationActionService
         array $payload,
         ?UploadedFile $proposalFile = null,
         ?UploadedFile $transcriptFile = null,
+        ?UploadedFile $paymentProofFile = null,
         ?UploadedFile $recommendationFile = null,
         bool $removeRecommendation = false,
     ): void {
         $registration = $registration->fresh();
-        $replacements = $this->storeReplacements($registration, $proposalFile, $transcriptFile, $recommendationFile, $removeRecommendation);
+        $replacements = $this->storeReplacements($registration, $proposalFile, $transcriptFile, $paymentProofFile, $recommendationFile, $removeRecommendation);
 
         try {
             DB::transaction(function () use ($registration, $payload, $replacements): void {
@@ -81,24 +89,24 @@ class StudentRegistrationActionService
     public function create(
         User $user,
         array $payload,
-        ?UploadedFile $proposalFile,
         ?UploadedFile $transcriptFile,
+        ?UploadedFile $paymentProofFile,
         ?UploadedFile $recommendationFile = null,
     ): PendaftaranMagang {
-        if (! $proposalFile || ! $transcriptFile) {
+        if (! $transcriptFile || ! $paymentProofFile) {
             throw ValidationException::withMessages([
-                'proposal_pkl' => 'Proposal PKL wajib dilampirkan saat pendaftaran baru.',
                 'transkrip_nilai' => 'Transkrip nilai terakhir wajib dilampirkan saat pendaftaran baru.',
+                'bukti_pembayaran' => 'Bukti pembayaran PKL/magang wajib dilampirkan saat pendaftaran baru.',
             ]);
         }
 
         $storedPaths = [];
 
         try {
-            $proposalPath = $this->proposalAttachmentService->store($proposalFile);
-            $storedPaths[] = $proposalPath;
             $transcriptPath = $this->proposalAttachmentService->storeTranscript($transcriptFile);
             $storedPaths[] = $transcriptPath;
+            $paymentProofPath = $this->proposalAttachmentService->storePaymentProof($paymentProofFile);
+            $storedPaths[] = $paymentProofPath;
             $recommendationPath = $recommendationFile
                 ? $this->proposalAttachmentService->storeRecommendation($recommendationFile)
                 : null;
@@ -106,7 +114,7 @@ class StudentRegistrationActionService
                 $storedPaths[] = $recommendationPath;
             }
 
-            return DB::transaction(function () use ($user, $payload, $proposalFile, $transcriptFile, $recommendationFile, $proposalPath, $transcriptPath, $recommendationPath): PendaftaranMagang {
+            return DB::transaction(function () use ($user, $payload, $transcriptFile, $paymentProofFile, $recommendationFile, $transcriptPath, $paymentProofPath, $recommendationPath): PendaftaranMagang {
                 $latestRegistration = PendaftaranMagang::where('mahasiswa_id', $user->id)
                     ->orderByDesc('tanggal_mulai')
                     ->orderByDesc('id')
@@ -132,12 +140,12 @@ class StudentRegistrationActionService
                 return PendaftaranMagang::create([
                     'mahasiswa_id' => $user->id,
                     ...$payload,
-                    'proposal_pkl_path' => $proposalPath,
-                    'proposal_pkl_original_name' => $proposalFile->getClientOriginalName(),
-                    'proposal_pkl_uploaded_at' => now(),
                     'transkrip_nilai_path' => $transcriptPath,
                     'transkrip_nilai_original_name' => $transcriptFile->getClientOriginalName(),
                     'transkrip_nilai_uploaded_at' => now(),
+                    'bukti_pembayaran_path' => $paymentProofPath,
+                    'bukti_pembayaran_original_name' => $paymentProofFile->getClientOriginalName(),
+                    'bukti_pembayaran_uploaded_at' => now(),
                     'surat_rekomendasi_kaprodi_path' => $recommendationPath,
                     'surat_rekomendasi_kaprodi_original_name' => $recommendationFile?->getClientOriginalName(),
                     'surat_rekomendasi_kaprodi_uploaded_at' => $recommendationFile ? now() : null,
@@ -150,6 +158,36 @@ class StudentRegistrationActionService
         }
     }
 
+    public function replaceProposal(PendaftaranMagang $registration, UploadedFile $proposalFile): void
+    {
+        $newPath = $this->proposalAttachmentService->store($proposalFile);
+        $oldPath = $registration->proposal_pkl_path;
+
+        try {
+            DB::transaction(function () use ($registration, $proposalFile, $newPath): void {
+                $locked = PendaftaranMagang::query()->lockForUpdate()->findOrFail($registration->id);
+
+                if (! in_array($locked->status, ['pending', 'revisi'], true)) {
+                    throw ValidationException::withMessages([
+                        'proposal_pkl' => 'Proposal hanya dapat diunggah saat pendaftaran menunggu review atau revisi.',
+                    ]);
+                }
+
+                $locked->update([
+                    'proposal_pkl_path' => $newPath,
+                    'proposal_pkl_original_name' => $proposalFile->getClientOriginalName(),
+                    'proposal_pkl_uploaded_at' => now(),
+                ]);
+            });
+        } catch (Throwable $throwable) {
+            $this->deletePaths([$newPath]);
+
+            throw $throwable;
+        }
+
+        $this->deletePaths([$oldPath]);
+    }
+
     private function nullIfBlank(?string $value): ?string
     {
         return blank($value) ? null : $value;
@@ -159,12 +197,14 @@ class StudentRegistrationActionService
         PendaftaranMagang $registration,
         ?UploadedFile $proposalFile,
         ?UploadedFile $transcriptFile,
+        ?UploadedFile $paymentProofFile,
         ?UploadedFile $recommendationFile,
         bool $removeRecommendation,
     ): array {
         $files = [
             'proposal' => [$proposalFile, 'proposal_pkl_path', 'proposal_pkl_original_name', 'proposal_pkl_uploaded_at', 'store'],
             'transcript' => [$transcriptFile, 'transkrip_nilai_path', 'transkrip_nilai_original_name', 'transkrip_nilai_uploaded_at', 'storeTranscript'],
+            'payment_proof' => [$paymentProofFile, 'bukti_pembayaran_path', 'bukti_pembayaran_original_name', 'bukti_pembayaran_uploaded_at', 'storePaymentProof'],
             'recommendation' => [$recommendationFile, 'surat_rekomendasi_kaprodi_path', 'surat_rekomendasi_kaprodi_original_name', 'surat_rekomendasi_kaprodi_uploaded_at', 'storeRecommendation'],
         ];
         $attributes = [];
