@@ -111,6 +111,9 @@ class MonitoringRegistrationResolverService
         return $carbonDate->toDateString();
     }
 
+    /**
+     * @param Builder<PendaftaranMagang> $baseQuery
+     */
     private function resolveByDate(Builder $baseQuery, string $date): ?PendaftaranMagang
     {
         // Monitoring lebih dulu mencari penempatan yang benar-benar aktif pada
@@ -146,6 +149,9 @@ class MonitoringRegistrationResolverService
             ->first();
     }
 
+    /**
+     * @return Builder<PendaftaranMagang>
+     */
     private function authorizedLecturerQuery(User $currentUser, int $mahasiswaId): Builder
     {
         return PendaftaranMagang::query()
@@ -156,6 +162,9 @@ class MonitoringRegistrationResolverService
             ->where('dosen_pembimbing_id', $currentUser->id);
     }
 
+    /**
+     * @return Builder<PendaftaranMagang>
+     */
     private function authorizedCompanyQuery(PerusahaanMitra $company, int $mahasiswaId): Builder
     {
         return PendaftaranMagang::query()
